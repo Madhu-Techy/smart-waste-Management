@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Waste Management — Prototype Landing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --surface: #ffffff;
+      --border: #e5eaf4;
+      --text: #1a2035;
+      --muted: #5a6480;
+      --brand: #16a34a;
+      --brand-dark: #15803d;
+      --shadow: 0 10px 30px rgba(20, 30, 60, 0.08);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(180deg, #f8faff 0%, var(--bg) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ecfdf3;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-size: clamp(24px, 3vw, 34px);
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+
+    .sub {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 16px;
+      font-size: 15px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pill {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+      box-shadow: 0 2px 8px rgba(20, 30, 60, 0.05);
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: #c9d6ef;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .open {
+      margin-top: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--brand-dark);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 560px) {
+      body { padding: 20px 12px; }
+      .hero { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <span class="badge">Prototype • Smart Waste Management</span>
+      <h1>Smart Waste Management Web App</h1>
+      <p class="sub">
+        This landing page provides direct access to all prototype screens. Examiners can click any module below to open and interact with each page.
+      </p>
+      <div class="meta">
+        <span class="pill">Static HTML Prototype</span>
+        <span class="pill">Hosted via GitHub Pages</span>
+        <span class="pill">Best viewed on desktop</span>
+      </div>
+    </section>
+
+    <section class="grid" aria-label="Prototype modules">
+      <a class="card" href="prototype.html">
+        <h2>Monitoring & Predictive Dashboard</h2>
+        <p>Main overview dashboard with charts and operational waste analytics.</p>
+        <span class="open">Open module →</span>
+      </a>
+
+      <a class="card" href="smart-waste-dashboard%20(1).html">
+        <h2>SmartBin — SLIIT Campus</h2>
+        <p>Campus-focused SmartBin monitoring dashboard with contextual insights.</p>
+        <span class="open">Open module →</span>
+      </a>
+
+      <a class="card" href="risk-hotspot-map.html">
+        <h2>Risk Hotspot Map</h2>
+        <p>Geo-visualized hotspot map for risk tracking and spatial analysis.</p>
+        <span class="open">Open module →</span>
+      </a>
+
+      <a class="card" href="mosquito-risk-panel.html">
+        <h2>Mosquito Breeding Risk Panel</h2>
+        <p>Risk intelligence panel for breeding probability and alert monitoring.</p>
+        <span class="open">Open module →</span>
+      </a>
+
+      <a class="card" href="suspicious-activity.html">
+        <h2>Suspicious Activity Monitor</h2>
+        <p>Monitoring panel for unusual events, incidents, and activity patterns.</p>
+        <span class="open">Open module →</span>
+      </a>
+
+      <a class="card" href="student-portal.html">
+        <h2>Student Portal</h2>
+        <p>End-user portal for engagement, updates, and sustainability activities.</p>
+        <span class="open">Open module →</span>
+      </a>
+    </section>
+
+    <p class="footer">© 2026 Smart Waste Management Prototype</p>
+  </main>
+</body>
+</html>
