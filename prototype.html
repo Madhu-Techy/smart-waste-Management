@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBin — Monitoring & Predictive Collection Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ─────────────────────────────────────────── */
+:root{
+  --bg:#f2f5fb;
+  --surface:#ffffff;
+  --surface2:#f8fafd;
+  --border:#e4eaf5;
+  --border2:#cdd6ec;
+  --text:#18243e;
+  --text2:#4a5779;
+  --text3:#8c97b5;
+
+  --green:#16c47f;--green-lt:#e7faf2;--green-bd:#a7ecd3;--green-dk:#0ea068;
+  --amber:#f59e0b;--amber-lt:#fff8e6;--amber-bd:#fde68a;--amber-dk:#d68a06;
+  --red:#ef4444;--red-lt:#fff1f1;--red-bd:#fecaca;--red-dk:#c82020;
+  --blue:#3b82f6;--blue-lt:#eff6ff;--blue-bd:#bfdbfe;--blue-dk:#1d4ed8;
+  --purple:#8b5cf6;--purple-lt:#f5f3ff;--purple-bd:#ddd6fe;
+  --teal:#06b6d4;--teal-lt:#ecfeff;--teal-bd:#a5f3fc;
+
+  --r:12px;--rlg:16px;--rxl:20px;
+  --sh:0 1px 3px rgba(20,36,80,.06),0 0 0 1px var(--border);
+  --shh:0 6px 20px rgba(20,36,80,.10),0 0 0 1px var(--border2);
+  --sh-card:0 2px 8px rgba(20,36,80,.07),0 0 0 1px var(--border);
+
+  --sidebar-w:236px;
+  --topbar-h:58px;
+  --filterbar-h:52px;
+}
+
+/* ── RESET ─────────────────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+button,select,input{font-family:'DM Sans',sans-serif}
+a{text-decoration:none}
+
+/* ── LAYOUT ─────────────────────────────────────────────────── */
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────── */
+.sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:200;overflow-y:auto;
+  transition:width .22s ease;
+}
+.sb-brand{
+  padding:18px 18px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:11px;
+}
+.brand-icon{
+  width:42px;height:42px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(135deg,#16c47f 0%,#059669 100%);
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  box-shadow:0 3px 10px rgba(22,196,127,.35);
+}
+.brand-text{font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;color:var(--text);line-height:1.1}
+.brand-sub{font-size:11px;color:var(--text3);font-weight:500;margin-top:2px}
+
+.nav-label{
+  padding:14px 18px 5px;
+  font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.09em;
+}
+.nav-item{
+  display:flex;align-items:center;gap:9px;
+  margin:2px 10px;padding:9px 11px;border-radius:10px;
+  cursor:pointer;color:var(--text2);font-size:13.5px;font-weight:500;
+  transition:all .15s;position:relative;
+}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--green-lt);color:var(--green-dk);font-weight:700}
+.nav-icon{
+  width:30px;height:30px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+}
+.nav-item.active .nav-icon{background:rgba(22,196,127,.18)}
+.nav-badge{
+  margin-left:auto;background:var(--red);color:#fff;
+  font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;
+  animation:pulse-badge 2s ease-in-out infinite;
+}
+@keyframes pulse-badge{0%,100%{opacity:1}50%{opacity:.6}}
+.sb-footer{
+  margin-top:auto;padding:12px;border-top:1px solid var(--border);
+}
+.user-row{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 10px;border-radius:10px;cursor:pointer;transition:background .15s;
+}
+.user-row:hover{background:var(--bg)}
+.avatar{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;
+}
+.user-name{font-size:13px;font-weight:700;color:var(--text)}
+.user-role{font-size:11px;color:var(--text3)}
+
+/* ── MAIN COLUMN ─────────────────────────────────────────────── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ── TOPBAR ─────────────────────────────────────────────────── */
+.topbar{
+  height:var(--topbar-h);min-height:var(--topbar-h);
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 22px;display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.page-title{font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;color:var(--text)}
+.page-subtitle{font-size:12px;color:var(--text3);font-weight:400;margin-top:1px}
+.live-badge{
+  display:flex;align-items:center;gap:5px;
+  background:var(--green-lt);border:1px solid var(--green-bd);
+  color:var(--green-dk);padding:4px 11px;border-radius:20px;font-size:12px;font-weight:700;
+}
+.live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-time{font-size:12px;color:var(--text3);font-weight:500}
+.icon-btn{
+  width:34px;height:34px;border-radius:9px;border:1px solid var(--border);
+  background:transparent;color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  transition:all .15s;position:relative;
+}
+.icon-btn:hover{background:var(--bg);color:var(--text);border-color:var(--border2)}
+.notif-dot{
+  position:absolute;top:6px;right:6px;
+  width:7px;height:7px;background:var(--red);border-radius:50%;border:1px solid var(--surface);
+}
+.role-select{
+  background:var(--bg);border:1px solid var(--border);color:var(--text);
+  border-radius:10px;padding:6px 10px;font-size:13px;cursor:pointer;outline:none;font-weight:500;
+}
+.role-select:hover{border-color:var(--green)}
+.btn{
+  padding:7px 15px;border-radius:10px;border:none;
+  font-size:13px;font-weight:600;cursor:pointer;
+  transition:all .15s;display:inline-flex;align-items:center;gap:6px;
+}
+.btn-primary{background:var(--green);color:#fff}
+.btn-primary:hover{background:var(--green-dk);transform:translateY(-1px);box-shadow:0 4px 12px rgba(22,196,127,.3)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg);color:var(--text)}
+
+/* ── FILTER BAR ─────────────────────────────────────────────── */
+.filterbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 22px;display:flex;align-items:center;gap:10px;flex-shrink:0;
+  height:var(--filterbar-h);overflow-x:auto;
+}
+.filter-label{font-size:11px;font-weight:700;color:var(--text3);white-space:nowrap}
+.fsel{
+  background:var(--bg);border:1px solid var(--border);color:var(--text);
+  border-radius:9px;padding:5px 10px;font-size:12.5px;cursor:pointer;
+  outline:none;font-weight:500;white-space:nowrap;
+}
+.fsel:hover,.fsel:focus{border-color:var(--green)}
+.filter-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.btn-filter-reset{
+  padding:5px 12px;border-radius:9px;border:1px dashed var(--border2);
+  background:transparent;color:var(--text3);font-size:12px;cursor:pointer;white-space:nowrap;
+}
+.btn-filter-reset:hover{color:var(--red);border-color:var(--red-bd)}
+
+/* ── SCROLLABLE CONTENT ─────────────────────────────────────── */
+.content{flex:1;overflow-y:auto;padding:20px 22px 30px}
+
+/* ── SECTIONS ─────────────────────────────────────────────────── */
+.section{display:none}.section.active{display:block}
+
+/* ── BREADCRUMB ─────────────────────────────────────────────── */
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text3);margin-bottom:18px}
+.breadcrumb .crumb{cursor:pointer}.breadcrumb .crumb:hover{color:var(--green)}
+.breadcrumb .crumb.current{color:var(--text2);font-weight:600;cursor:default}
+.bc-sep{color:var(--border2)}
+
+/* ── STATUS CHIPS ─────────────────────────────────────────────── */
+.status-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.chip{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--text2);
+  box-shadow:var(--sh);
+}
+.chip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ── KPI CARDS ─────────────────────────────────────────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi-card{
+  background:var(--surface);border-radius:var(--rlg);
+  padding:18px 20px;box-shadow:var(--sh-card);cursor:pointer;
+  transition:all .2s;border:2px solid transparent;
+}
+.kpi-card:hover{box-shadow:var(--shh);transform:translateY(-2px)}
+.kpi-card.selected{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,196,127,.12)}
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.kpi-label{font-size:12.5px;font-weight:600;color:var(--text2)}
+.kpi-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.kpi-num{font-family:'Nunito',sans-serif;font-size:32px;font-weight:900;line-height:1;margin-bottom:5px}
+.kpi-sub{font-size:11.5px;color:var(--text3);font-weight:500}
+.kpi-trend-up{color:var(--red);font-weight:700}
+.kpi-trend-dn{color:var(--green);font-weight:700}
+.sparkline{display:flex;align-items:flex-end;gap:2px;height:26px;margin-top:10px}
+.spark-bar{flex:1;border-radius:2px;min-height:3px;opacity:.7}
+
+/* ── SECTION ROWS ─────────────────────────────────────────────── */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.row3{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.row3r{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:16px}
+.row-equal{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+
+/* ── CARDS ─────────────────────────────────────────────────── */
+.card{background:var(--surface);border-radius:var(--rlg);box-shadow:var(--sh-card);overflow:hidden}
+.card-header{
+  padding:15px 20px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+}
+.card-title{font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:var(--text)}
+.card-subtitle{font-size:12px;color:var(--text3);font-weight:400;margin-top:2px}
+.card-body{padding:18px 20px}
+.card-actions{display:flex;gap:6px;align-items:center}
+.chart-box{position:relative;height:210px}
+
+/* ── MAP AREA ─────────────────────────────────────────────────── */
+.map-wrap{
+  height:360px;background:linear-gradient(135deg,#e8eefd 0%,#dce8f6 100%);
+  border-radius:var(--r);position:relative;overflow:hidden;
+  border:1px solid var(--border);
+}
+.map-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:52px 52px;opacity:.45;
+}
+.map-zone-label{
+  position:absolute;font-size:11px;font-weight:800;color:rgba(74,87,121,.55);
+  background:rgba(255,255,255,.6);padding:3px 8px;border-radius:6px;
+  text-transform:uppercase;letter-spacing:.07em;
+}
+.map-road{position:absolute;background:rgba(180,190,220,.35);border-radius:2px}
+.map-building{position:absolute;background:rgba(160,178,218,.18);border:1px solid rgba(160,178,218,.3);border-radius:4px}
+.bin-marker{
+  position:absolute;width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  cursor:pointer;transition:transform .2s,box-shadow .2s;
+  border:2.5px solid rgba(255,255,255,.95);
+  box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:2;
+}
+.bin-marker:hover{transform:scale(1.35);z-index:10;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.bin-marker.bm-red{background:var(--red)}
+.bin-marker.bm-amber{background:var(--amber)}
+.bin-marker.bm-green{background:var(--green)}
+.bin-marker.bm-blue{background:var(--blue)}
+.bin-marker.bm-gray{background:#9ca3af}
+.bin-marker.bm-purple{background:var(--purple)}
+.bin-marker.bm-teal{background:var(--teal)}
+.bin-tooltip{
+  position:absolute;background:var(--text);color:#fff;border-radius:9px;
+  padding:6px 11px;font-size:11.5px;font-weight:600;white-space:nowrap;
+  top:-44px;left:50%;transform:translateX(-50%);
+  display:none;pointer-events:none;z-index:20;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);
+}
+.bin-tooltip::after{
+  content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:4px solid transparent;border-top-color:var(--text);
+}
+.bin-marker:hover .bin-tooltip{display:block}
+.map-legend{
+  position:absolute;bottom:14px;right:14px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:10px 14px;display:flex;flex-direction:column;gap:6px;
+  box-shadow:var(--sh);
+}
+.legend-row{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text2);font-weight:500}
+.legend-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(255,255,255,.8)}
+.map-controls{
+  position:absolute;top:12px;right:12px;
+  display:flex;gap:4px;
+}
+.map-ctrl-btn{
+  width:30px;height:30px;background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:14px;transition:all .15s;color:var(--text2);
+}
+.map-ctrl-btn:hover{background:var(--green-lt);color:var(--green-dk);border-color:var(--green-bd)}
+
+/* ── ALERT PANEL ─────────────────────────────────────────────── */
+.alerts-list{display:flex;flex-direction:column;gap:8px}
+.alert-row{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 14px;border-radius:11px;border:1px solid transparent;
+  cursor:pointer;transition:all .15s;
+}
+.alert-row:hover{transform:translateX(3px)}
+.alert-row.level-critical{background:var(--red-lt);border-color:var(--red-bd)}
+.alert-row.level-warning{background:var(--amber-lt);border-color:var(--amber-bd)}
+.alert-row.level-info{background:var(--blue-lt);border-color:var(--blue-bd)}
+.alert-row.level-teal{background:var(--teal-lt);border-color:var(--teal-bd)}
+.alert-indicator{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.level-critical .alert-indicator{background:var(--red);animation:blink 1.4s ease-in-out infinite}
+.level-warning .alert-indicator{background:var(--amber);animation:blink 2s ease-in-out infinite}
+.level-info .alert-indicator{background:var(--blue)}
+.level-teal .alert-indicator{background:var(--teal)}
+.alert-body{flex:1;min-width:0}
+.alert-title{font-size:13px;font-weight:700;margin-bottom:2px}
+.level-critical .alert-title{color:#b91c1c}
+.level-warning .alert-title{color:#b45309}
+.level-info .alert-title{color:#1d4ed8}
+.level-teal .alert-title{color:#0e7490}
+.alert-desc{font-size:12px;color:var(--text2);line-height:1.4}
+.alert-time{font-size:11px;color:var(--text3);font-weight:500;margin-top:3px}
+.alert-action{
+  padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;
+  border:1px solid;background:transparent;cursor:pointer;align-self:center;
+  white-space:nowrap;transition:all .15s;
+}
+.level-critical .alert-action{color:#b91c1c;border-color:#fca5a5}
+.level-critical .alert-action:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.level-warning .alert-action{color:#b45309;border-color:#fcd34d}
+.level-warning .alert-action:hover{background:var(--amber);color:#fff;border-color:var(--amber)}
+.level-info .alert-action{color:#1d4ed8;border-color:#93c5fd}
+.level-info .alert-action:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+.level-teal .alert-action{color:#0e7490;border-color:#a5f3fc}
+.level-teal .alert-action:hover{background:var(--teal);color:#fff;border-color:var(--teal)}
+
+/* ── BIN TABLE ─────────────────────────────────────────────────── */
+.table-controls{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:12px 14px;border-bottom:1px solid var(--border);
+}
+.search-input{
+  background:var(--bg);border:1px solid var(--border);color:var(--text);
+  border-radius:9px;padding:7px 12px;font-size:13px;outline:none;
+  font-family:'DM Sans',sans-serif;width:180px;
+}
+.search-input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,196,127,.1)}
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{border-bottom:2px solid var(--border)}
+th{
+  padding:10px 14px;text-align:left;color:var(--text3);
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;white-space:nowrap;
+}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text2)}
+tr:last-child td{border-bottom:none}
+tbody tr{cursor:pointer;transition:background .1s}
+tbody tr:hover td{background:var(--surface2);color:var(--text)}
+tbody tr.expanded-row{background:var(--green-lt)}
+
+/* ── STATUS TAGS ─────────────────────────────────────────────── */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.tag-red{background:var(--red-lt);color:#b91c1c}
+.tag-amber{background:var(--amber-lt);color:#b45309}
+.tag-green{background:var(--green-lt);color:var(--green-dk)}
+.tag-blue{background:var(--blue-lt);color:#1d4ed8}
+.tag-gray{background:#f1f5f9;color:#64748b}
+.tag-purple{background:var(--purple-lt);color:#6d28d9}
+.tag-teal{background:var(--teal-lt);color:#0e7490}
+
+/* ── FILL BAR ─────────────────────────────────────────────────── */
+.fill-bar{height:7px;background:var(--bg);border-radius:4px;overflow:hidden;width:80px;border:1px solid var(--border)}
+.fill-progress{height:100%;border-radius:4px;transition:width .3s}
+
+/* ── PREDICTION CARDS ─────────────────────────────────────────── */
+.pred-list{display:flex;flex-direction:column;gap:8px}
+.pred-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;background:var(--surface2);border-radius:11px;
+  border:1px solid var(--border);cursor:pointer;transition:border-color .15s;
+}
+.pred-item:hover{border-color:var(--border2)}
+.pred-id{font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;width:48px;flex-shrink:0}
+.pred-info{flex:1}
+.pred-loc{font-size:12px;color:var(--text2);font-weight:500}
+.pred-time{font-size:13px;font-weight:700;margin-top:1px}
+.urgency-tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+.utag-urgent{background:var(--red-lt);color:#b91c1c;border:1px solid var(--red-bd)}
+.utag-soon{background:var(--amber-lt);color:#b45309;border:1px solid var(--amber-bd)}
+.utag-watch{background:var(--blue-lt);color:#1d4ed8;border:1px solid var(--blue-bd)}
+.utag-ok{background:var(--green-lt);color:var(--green-dk);border:1px solid var(--green-bd)}
+
+/* ── ZONE CARDS ─────────────────────────────────────────────────── */
+.zone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.zone-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
+  padding:15px;cursor:pointer;transition:all .2s;
+}
+.zone-card:hover{box-shadow:var(--shh);transform:translateY(-2px);border-color:var(--green)}
+.zone-card.selected{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,196,127,.1)}
+.zone-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.zone-name{font-family:'Nunito',sans-serif;font-size:15px;font-weight:900}
+.zone-fill-track{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:8px;border:1px solid var(--border)}
+.zone-fill-bar{height:100%;border-radius:4px}
+.zone-stats{display:flex;gap:14px;font-size:12px;color:var(--text3);font-weight:500}
+
+/* ── ASSIGNMENT PANEL ─────────────────────────────────────────── */
+.assign-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.assign-col-title{
+  font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.07em;margin-bottom:10px;
+}
+.pending-bin{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;background:var(--surface2);border-radius:10px;
+  border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:border-color .15s;
+}
+.pending-bin:hover{border-color:var(--green)}
+.pending-bin.selected{border-color:var(--green);background:var(--green-lt)}
+.staff-card{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;background:var(--surface2);border-radius:10px;
+  border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .15s;
+}
+.staff-card:hover{border-color:var(--blue)}
+.staff-avatar{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;
+}
+.staff-name{font-size:13px;font-weight:700;color:var(--text)}
+.staff-status{font-size:11px;font-weight:500}
+.status-avail{color:var(--green-dk)}
+.status-busy{color:var(--red)}
+.status-route{color:var(--amber-dk)}
+.staff-workload{font-size:11px;color:var(--text3);margin-top:1px}
+
+/* ── INSIGHT CHARTS ─────────────────────────────────────────────── */
+.insight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+.heatmap-wrap{overflow-x:auto}
+.heatmap-grid{display:grid;gap:3px}
+.hm-cell{height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;cursor:pointer;transition:transform .1s}
+.hm-cell:hover{transform:scale(1.08);z-index:2;position:relative}
+.hm-label{background:transparent;color:var(--text3);font-size:11px;font-weight:600;justify-content:flex-end;padding-right:6px}
+.hm-header{background:transparent;color:var(--text3);font-size:11px;font-weight:700}
+
+/* ── DEVICE PANEL ─────────────────────────────────────────────── */
+.device-list{display:flex;flex-direction:column;gap:8px}
+.device-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;background:var(--surface2);border-radius:11px;
+  border:1px solid var(--border);font-size:13px;
+}
+.device-id{font-family:'Nunito',sans-serif;font-weight:900;width:60px;color:var(--text);font-size:13px}
+.device-info{flex:1}
+.device-name{font-weight:600;color:var(--text)}
+.device-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.bat-bar{height:7px;width:52px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.bat-fill{height:100%;border-radius:3px}
+.signal-bar{display:flex;align-items:flex-end;gap:1.5px;height:14px}
+.sig-seg{width:4px;border-radius:1px}
+
+/* ── TABS ─────────────────────────────────────────────────────── */
+.tab-bar{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:18px}
+.tab-item{
+  padding:9px 18px;font-size:13px;cursor:pointer;color:var(--text3);
+  font-weight:600;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;
+}
+.tab-item:hover{color:var(--text)}
+.tab-item.active{color:var(--green);border-bottom-color:var(--green)}
+
+/* ── MODAL ─────────────────────────────────────────────────────── */
+.overlay{
+  position:fixed;inset:0;background:rgba(18,30,68,.38);
+  backdrop-filter:blur(5px);z-index:1000;display:none;
+  align-items:center;justify-content:center;
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--surface);border-radius:var(--rxl);
+  width:480px;max-width:94vw;max-height:90vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(18,30,80,.18);animation:popIn .22s ease;
+}
+@keyframes popIn{from{transform:scale(.93) translateY(14px);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{
+  padding:20px 22px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-title{font-family:'Nunito',sans-serif;font-weight:800;font-size:17px}
+.modal-close{
+  width:30px;height:30px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;color:var(--text3);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.modal-close:hover{background:var(--red-lt);color:var(--red);border-color:var(--red-bd)}
+.modal-body{padding:20px 22px}
+.detail-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--border);font-size:13.5px;
+}
+.detail-row:last-of-type{border-bottom:none}
+.detail-key{color:var(--text3);font-weight:600}
+.detail-val{font-weight:700;color:var(--text)}
+.modal-actions{display:flex;gap:8px;margin-top:18px}
+
+/* ── TOAST ─────────────────────────────────────────────────────── */
+.toast-container{position:fixed;top:18px;right:18px;z-index:2000;display:flex;flex-direction:column;gap:8px}
+.toast{
+  background:var(--surface);border-radius:14px;padding:13px 16px;
+  min-width:280px;max-width:360px;display:flex;align-items:flex-start;gap:11px;
+  animation:slideIn .3s ease;box-shadow:0 8px 30px rgba(18,30,80,.12),0 0 0 1px var(--border);
+  transition:opacity .3s,transform .3s;
+}
+@keyframes slideIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast-icon{font-size:20px;flex-shrink:0}
+.toast-title{font-size:13px;font-weight:700;color:var(--text)}
+.toast-msg{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* ── SECTION HEADING ─────────────────────────────────────────── */
+.sec-heading{margin:22px 0 14px}
+.sec-heading h3{font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;color:var(--text)}
+.sec-heading p{font-size:12.5px;color:var(--text3);margin-top:2px}
+
+/* ── PREDICTION INSIGHT CARDS ─────────────────────────────────── */
+.pred-insight{
+  background:var(--surface);border-radius:var(--rlg);padding:16px;
+  box-shadow:var(--sh-card);border-left:4px solid var(--green);
+}
+.pred-insight.danger{border-left-color:var(--red)}
+.pred-insight.warning{border-left-color:var(--amber)}
+.pred-insight.info{border-left-color:var(--blue)}
+.pred-insight-num{font-family:'Nunito',sans-serif;font-size:28px;font-weight:900}
+.pred-insight-label{font-size:12px;color:var(--text2);font-weight:500;margin-top:3px}
+.pred-insight-desc{font-size:11.5px;color:var(--text3);margin-top:6px;line-height:1.4}
+
+/* ── SETTINGS ─────────────────────────────────────────────────── */
+.settings-group{background:var(--surface2);border-radius:12px;padding:18px;border:1px solid var(--border);margin-bottom:14px}
+.setting-label{font-size:13px;font-weight:700;color:var(--text2);display:block;margin-bottom:10px}
+.range-row{display:flex;align-items:center;gap:14px}
+input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
+.range-val{font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;width:52px;color:var(--text)}
+
+/* ── MINI METRIC ─────────────────────────────────────────────── */
+.mini-metrics{display:flex;gap:16px;flex-wrap:wrap}
+.mini-metric{text-align:center}
+.mini-metric-val{font-family:'Nunito',sans-serif;font-size:20px;font-weight:900}
+.mini-metric-lbl{font-size:11px;color:var(--text3);font-weight:500}
+
+/* ── EXPAND ROW ─────────────────────────────────────────────────── */
+.expand-detail{
+  background:var(--green-lt);padding:14px 20px;
+  border-top:1px solid var(--green-bd);display:none;
+}
+.expand-detail.open{display:block}
+.expand-inner{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.expand-block{background:var(--surface);border-radius:10px;padding:12px 14px;border:1px solid var(--border)}
+.expand-block-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────────── */
+@media(max-width:1200px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .row3,.row3r{grid-template-columns:1fr}
+  .insight-grid{grid-template-columns:1fr 1fr}
+  .zone-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:900px){
+  .row2{grid-template-columns:1fr}
+  .assign-layout{grid-template-columns:1fr}
+  .insight-grid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  :root{--sidebar-w:60px}
+  .brand-text,.brand-sub,.nav-item>span:not(.nav-icon),.nav-label,.nav-badge,.user-row>div{display:none}
+  .nav-item{padding:10px;justify-content:center}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .zone-grid{grid-template-columns:1fr}
+  .row-equal{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="brand-icon">♻️</div>
+    <div>
+      <div class="brand-text">SmartBin</div>
+      <div class="brand-sub">SLIIT Campus</div>
+    </div>
+  </div>
+
+  <div class="nav-label">Main Menu</div>
+  <nav>
+    <div class="nav-item active" onclick="goSection('home',this)"><div class="nav-icon">🏠</div><span>Dashboard</span></div>
+    <div class="nav-item" onclick="goSection('map',this)"><div class="nav-icon">🗺️</div><span>Live Map</span></div>
+    <div class="nav-item" onclick="goSection('bins',this)"><div class="nav-icon">🗑️</div><span>All Bins</span></div>
+    <div class="nav-item" onclick="goSection('alerts',this)"><div class="nav-icon">🔔</div><span>Alerts</span><span class="nav-badge" id="alertBadge">5</span></div>
+    <div class="nav-item" onclick="goSection('predictions',this)"><div class="nav-icon">🔮</div><span>Predictions</span></div>
+    <div class="nav-item" onclick="goSection('assignment',this)"><div class="nav-icon">📋</div><span>Assignments</span></div>
+    <div class="nav-item" onclick="goSection('analytics',this)"><div class="nav-icon">📊</div><span>Reports</span></div>
+  </nav>
+
+  <div class="nav-label">Tools</div>
+  <nav>
+    <div class="nav-item" onclick="goSection('devices',this)"><div class="nav-icon">📡</div><span>Sensors</span></div>
+    <div class="nav-item" onclick="goSection('settings',this)"><div class="nav-icon">⚙️</div><span>Settings</span></div>
+  </nav>
+
+  <div class="sb-footer">
+    <div class="user-row">
+      <div class="avatar">AS</div>
+      <div>
+        <div class="user-name">A. Silva</div>
+        <div class="user-role">Supervisor</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="pageTitle">Smart Bin Monitoring & Predictive Collection Dashboard</div>
+      <div class="page-subtitle">Monitor bin status, detect risks, assign collection staff, and track performance in real time.</div>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+    <div class="tb-right">
+      <div class="tb-time" id="liveTime"></div>
+      <div class="icon-btn" title="Notifications" onclick="showToast('info','🔔 3 new alerts','Bin A07 overflowing · Bin C03 wet · Bin B12 rapid fill')">🔔<div class="notif-dot"></div></div>
+      <div class="icon-btn" title="Refresh" onclick="showToast('success','✅ Data refreshed','All bin data updated just now')">↺</div>
+      <select class="role-select" onchange="switchRole(this.value)">
+        <option value="supervisor">👷 Supervisor</option>
+        <option value="health">🏥 Health Officer</option>
+        <option value="maintenance">🔧 Maintenance</option>
+        <option value="manager">📋 Manager</option>
+      </select>
+      <button class="btn btn-primary" onclick="openAssignModal()">+ Assign Pickup</button>
+    </div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filterbar">
+    <span class="filter-label">Filter:</span>
+    <select class="fsel" id="fSector"><option value="">All Sectors</option><option>Zone A</option><option>Zone B</option><option>Zone C</option><option>Zone D</option><option>Zone E</option></select>
+    <select class="fsel" id="fBinID"><option value="">All Bin IDs</option><option>A07</option><option>B09</option><option>B12</option><option>C03</option><option>D05</option><option>E02</option></select>
+    <select class="fsel" id="fStatus"><option value="">All Status</option><option>Overflow</option><option>Almost Full</option><option>Medium</option><option>Low</option></select>
+    <div class="filter-sep"></div>
+    <select class="fsel" id="fRisk"><option value="">All Risk Types</option><option>Overflow</option><option>Moisture</option><option>PIR Activity</option><option>Illegal Dumping</option><option>Animal</option></select>
+    <select class="fsel" id="fAssign"><option value="">Assigned &amp; Unassigned</option><option>Assigned</option><option>Unassigned</option></select>
+    <div class="filter-sep"></div>
+    <select class="fsel" id="fWindow"><option>Next 30 mins</option><option>Next 1 hour</option><option>Next 3 hours</option></select>
+    <button class="btn-filter-reset" onclick="resetFilters()">↺ Reset Filters</button>
+  </div>
+
+  <!-- SCROLLABLE CONTENT -->
+  <div class="content">
+
+  <!-- ══════ HOME SECTION ══════ -->
+  <section class="section active" id="sec-home">
+    <div class="breadcrumb">
+      <span class="crumb" onclick="goSection('home',null)">SmartBin</span>
+      <span class="bc-sep">›</span>
+      <span class="crumb current">Dashboard Home</span>
+    </div>
+
+    <div class="status-chips" id="statusChips">
+      <div class="chip"><div class="chip-dot" style="background:#cbd5e1"></div>Updated 1 min ago</div>
+      <div class="chip"><div class="chip-dot" style="background:var(--green)"></div>48 bins working fine</div>
+      <div class="chip"><div class="chip-dot" style="background:var(--red)"></div>5 need urgent action</div>
+      <div class="chip"><div class="chip-dot" style="background:var(--amber)"></div>7 filling up soon</div>
+      <div class="chip"><div class="chip-dot" style="background:var(--blue)"></div>3 motion alerts today</div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
+      <div class="kpi-card" onclick="filterByKpi('urgent')">
+        <div class="kpi-top"><div class="kpi-label">Bins Needing Action</div><div class="kpi-icon" style="background:var(--red-lt)">🚨</div></div>
+        <div class="kpi-num" style="color:var(--red)">5</div>
+        <div class="kpi-sub"><span class="kpi-trend-up">↑ +2</span> since this morning</div>
+        <div class="sparkline" id="sp1"></div>
+      </div>
+      <div class="kpi-card" onclick="filterByKpi('overflow')">
+        <div class="kpi-top"><div class="kpi-label">Predicted Overflows (1hr)</div><div class="kpi-icon" style="background:var(--amber-lt)">⏱️</div></div>
+        <div class="kpi-num" style="color:var(--amber)">3</div>
+        <div class="kpi-sub">Bins A07, B09, E02 at risk</div>
+        <div class="sparkline" id="sp2"></div>
+      </div>
+      <div class="kpi-card" onclick="filterByKpi('unassigned')">
+        <div class="kpi-top"><div class="kpi-label">Unassigned Critical Alerts</div><div class="kpi-icon" style="background:var(--purple-lt)">📌</div></div>
+        <div class="kpi-num" style="color:var(--purple)">4</div>
+        <div class="kpi-sub">Awaiting staff assignment</div>
+        <div class="sparkline" id="sp3"></div>
+      </div>
+      <div class="kpi-card" onclick="filterByKpi('response')">
+        <div class="kpi-top"><div class="kpi-label">Avg Response Time</div><div class="kpi-icon" style="background:var(--blue-lt)">⚡</div></div>
+        <div class="kpi-num" style="color:var(--blue)">14<span style="font-size:16px;font-weight:600">m</span></div>
+        <div class="kpi-sub"><span class="kpi-trend-dn">↓ 3min</span> from last week</div>
+        <div class="sparkline" id="sp4"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top"><div class="kpi-label">On-Time Collection Rate</div><div class="kpi-icon" style="background:var(--green-lt)">✅</div></div>
+        <div class="kpi-num" style="color:var(--green)">91%</div>
+        <div class="kpi-sub"><span class="kpi-trend-dn">↑ +3%</span> from last month</div>
+        <div class="sparkline" id="sp5"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top"><div class="kpi-label">Wet-Risk Bins</div><div class="kpi-icon" style="background:var(--teal-lt)">💧</div></div>
+        <div class="kpi-num" style="color:var(--teal)">6</div>
+        <div class="kpi-sub">Moisture detected, health risk</div>
+        <div class="sparkline" id="sp6"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top"><div class="kpi-label">Offline / Low Battery</div><div class="kpi-icon" style="background:#f1f5f9">📵</div></div>
+        <div class="kpi-num" style="color:#64748b">6</div>
+        <div class="kpi-sub">4 offline · 2 low battery</div>
+        <div class="sparkline" id="sp7"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top"><div class="kpi-label">Staff Active Today</div><div class="kpi-icon" style="background:var(--green-lt)">👷</div></div>
+        <div class="kpi-num" style="color:var(--green-dk)">8</div>
+        <div class="kpi-sub">5 available · 3 on route</div>
+        <div class="sparkline" id="sp8"></div>
+      </div>
+    </div>
+
+    <!-- MAP + ALERTS -->
+    <div class="row3">
+      <!-- Map -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📍 Live Campus Bin Map</div>
+            <div class="card-subtitle">Click any bin marker to view details and assign staff</div>
+          </div>
+          <div class="card-actions">
+            <select class="fsel" style="font-size:12px" onchange="filterMapZone(this.value)">
+              <option value="">All Zones</option><option>Zone A</option><option>Zone B</option><option>Zone C</option><option>Zone D</option><option>Zone E</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body" style="padding:14px">
+          <div class="map-wrap" id="campusMap">
+            <div class="map-grid"></div>
+
+            <!-- Roads -->
+            <div class="map-road" style="top:48%;left:0;right:0;height:18px"></div>
+            <div class="map-road" style="left:38%;top:0;bottom:0;width:16px"></div>
+            <div class="map-road" style="top:72%;left:0;right:0;height:12px"></div>
+
+            <!-- Buildings -->
+            <div class="map-building" style="top:8%;left:5%;width:26%;height:28%"></div>
+            <div class="map-building" style="top:8%;left:48%;width:18%;height:22%"></div>
+            <div class="map-building" style="top:8%;right:5%;width:22%;height:20%"></div>
+            <div class="map-building" style="top:55%;left:5%;width:20%;height:22%"></div>
+            <div class="map-building" style="top:55%;right:8%;width:22%;height:22%"></div>
+            <div class="map-building" style="top:60%;left:44%;width:14%;height:16%"></div>
+
+            <!-- Zone labels -->
+            <div class="map-zone-label" style="top:10%;left:6%">Zone A</div>
+            <div class="map-zone-label" style="top:10%;left:49%">Zone B</div>
+            <div class="map-zone-label" style="top:10%;right:6%">Zone C</div>
+            <div class="map-zone-label" style="top:58%;left:6%">Zone D</div>
+            <div class="map-zone-label" style="top:58%;right:9%">Zone E</div>
+
+            <!-- Bin markers -->
+            <div class="bin-marker bm-red" style="top:18%;left:12%" onclick="showBinModal('A07','Zone A','97%','Wet','High','2 min ago','Critical','Unassigned','3.1V','Good')"><div class="bin-tooltip">A07 — 97% FULL</div>🗑️</div>
+            <div class="bin-marker bm-amber" style="top:25%;left:22%" onclick="showBinModal('A03','Zone A','72%','Dry','None','18 min ago','High','J. Perera','3.8V','Good')"><div class="bin-tooltip">A03 — 72% Full</div>🗑️</div>
+            <div class="bin-marker bm-green" style="top:14%;left:8%" onclick="showBinModal('A01','Zone A','28%','Dry','None','2 hr ago','Normal','N/A','4.0V','Good')"><div class="bin-tooltip">A01 — 28% OK</div>🗑️</div>
+            <div class="bin-marker bm-teal" style="top:20%;left:52%" onclick="showBinModal('B05','Zone B','55%','Wet','None','30 min ago','Warning','Unassigned','3.6V','Good')"><div class="bin-tooltip">B05 — Wet Risk</div>🗑️</div>
+            <div class="bin-marker bm-amber" style="top:14%;left:60%" onclick="showBinModal('B09','Zone B','82%','Moist','None','5 min ago','High','Unassigned','3.5V','Good')"><div class="bin-tooltip">B09 — 82% Full</div>🗑️</div>
+            <div class="bin-marker bm-red" style="top:28%;left:56%" onclick="showBinModal('B12','Zone B','89%','Dry','High','15 min ago','Critical','Unassigned','3.4V','Good')"><div class="bin-tooltip">B12 — Rapid Fill!</div>🗑️</div>
+            <div class="bin-marker bm-green" style="top:15%;right:12%" onclick="showBinModal('C01','Zone C','30%','Dry','None','1 hr ago','Normal','N/A','3.9V','Good')"><div class="bin-tooltip">C01 — 30% OK</div>🗑️</div>
+            <div class="bin-marker bm-blue" style="top:22%;right:8%" onclick="showBinModal('C03','Zone C','45%','Wet','None','8 min ago','Moisture Alert','Unassigned','3.7V','Good')"><div class="bin-tooltip">C03 — Wet!</div>🗑️</div>
+            <div class="bin-marker bm-purple" style="top:62%;left:12%" onclick="showBinModal('D05','Zone D','38%','Dry','Very High','22 min ago','PIR Alert','Unassigned','3.3V','Fair')"><div class="bin-tooltip">D05 — Animal?</div>🗑️</div>
+            <div class="bin-marker bm-green" style="top:70%;left:20%" onclick="showBinModal('D01','Zone D','22%','Dry','None','45 min ago','Normal','N/A','4.0V','Good')"><div class="bin-tooltip">D01 — 22% OK</div>🗑️</div>
+            <div class="bin-marker bm-amber" style="top:65%;right:12%" onclick="showBinModal('E02','Zone E','76%','Dry','None','10 min ago','Warning','S. Fernando','3.6V','Good')"><div class="bin-tooltip">E02 — 76% Full</div>🗑️</div>
+            <div class="bin-marker bm-gray" style="top:72%;right:20%" onclick="showBinModal('E08','Zone E','—','—','—','Offline','Offline','N/A','2.9V','Offline')"><div class="bin-tooltip">E08 — Offline</div>🗑️</div>
+
+            <!-- Legend -->
+            <div class="map-legend">
+              <div class="legend-row"><div class="legend-dot" style="background:var(--red)"></div>Critical / Overflow</div>
+              <div class="legend-row"><div class="legend-dot" style="background:var(--amber)"></div>Almost Full</div>
+              <div class="legend-row"><div class="legend-dot" style="background:var(--green)"></div>Normal</div>
+              <div class="legend-row"><div class="legend-dot" style="background:var(--blue)"></div>Wet / Moisture</div>
+              <div class="legend-row"><div class="legend-dot" style="background:var(--purple)"></div>Unusual Activity</div>
+              <div class="legend-row"><div class="legend-dot" style="background:#9ca3af"></div>Offline</div>
+            </div>
+
+            <!-- Map controls -->
+            <div class="map-controls">
+              <button class="map-ctrl-btn" title="Zoom in">+</button>
+              <button class="map-ctrl-btn" title="Zoom out">−</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Priority Alerts -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🔔 Priority Alerts</div>
+            <div class="card-subtitle">Ranked by urgency — act on red first</div>
+          </div>
+          <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="goSection('alerts',null)">See all →</button>
+        </div>
+        <div class="card-body" style="padding:14px">
+          <div class="alerts-list">
+            <div class="alert-row level-critical">
+              <div class="alert-indicator"></div>
+              <div class="alert-body">
+                <div class="alert-title">🗑️ Bin A07 — Overflow Risk!</div>
+                <div class="alert-desc">97% full near Zone A Block 3. Motion detected nearby.</div>
+                <div class="alert-time">2 minutes ago · Zone A</div>
+              </div>
+              <button class="alert-action" onclick="openAssignModal()">Assign →</button>
+            </div>
+            <div class="alert-row level-critical">
+              <div class="alert-indicator"></div>
+              <div class="alert-body">
+                <div class="alert-title">⚡ Bin B12 — Rapid Fill!</div>
+                <div class="alert-desc">Fill jumped 65% in 12 minutes — possible illegal dumping.</div>
+                <div class="alert-time">15 minutes ago · Zone B</div>
+              </div>
+              <button class="alert-action" onclick="showBinModal('B12','Zone B','89%','Dry','High','15 min ago','Critical','Unassigned','3.4V','Good')">Check →</button>
+            </div>
+            <div class="alert-row level-warning">
+              <div class="alert-indicator"></div>
+              <div class="alert-body">
+                <div class="alert-title">💧 Bin C03 — Wet Waste</div>
+                <div class="alert-desc">Moisture detected. Possible mosquito breeding risk.</div>
+                <div class="alert-time">8 minutes ago · Zone C</div>
+              </div>
+              <button class="alert-action" onclick="showBinModal('C03','Zone C','45%','Wet','None','8 min ago','Moisture Alert','Unassigned','3.7V','Good')">Inspect →</button>
+            </div>
+            <div class="alert-row level-warning">
+              <div class="alert-indicator"></div>
+              <div class="alert-body">
+                <div class="alert-title">⏱️ Bin B09 — Filling Fast</div>
+                <div class="alert-desc">82% full. Predicted overflow in 45 minutes.</div>
+                <div class="alert-time">5 minutes ago · Zone B</div>
+              </div>
+              <button class="alert-action" onclick="openAssignModal()">Assign →</button>
+            </div>
+            <div class="alert-row level-info">
+              <div class="alert-indicator"></div>
+              <div class="alert-body">
+                <div class="alert-title">🐾 Bin D05 — Animal Activity</div>
+                <div class="alert-desc">PIR motion triggered 7× in the last hour.</div>
+                <div class="alert-time">22 minutes ago · Zone D</div>
+              </div>
+              <button class="alert-action">Dispatch →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">📈 Bin Fullness Over the Day</div><div class="card-subtitle">Average fill level across all bins (every 2 hours)</div></div>
+          <select class="fsel" style="font-size:12px" onchange="updateFillChart(this.value)"><option value="all">All Zones</option><option value="A">Zone A</option><option value="B">Zone B</option><option value="C">Zone C</option></select>
+        </div>
+        <div class="card-body"><div class="chart-box"><canvas id="fillChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">🍩 Status Breakdown</div><div class="card-subtitle">Right now across campus</div></div></div>
+        <div class="card-body">
+          <div class="chart-box" style="height:170px"><canvas id="donutChart"></canvas></div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px">
+            <span style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:var(--red);display:inline-block"></span>Critical (5)</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:var(--amber);display:inline-block"></span>Filling up (20)</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:var(--green);display:inline-block"></span>All good (23)</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:#cbd5e1;display:inline-block"></span>Offline (4)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREDICTIONS PREVIEW + OVERFLOW PREDICTION CHART -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">🔮 Overflow Predictions</div><div class="card-subtitle">Which bins will overflow in the next 2 hours?</div></div><button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="goSection('predictions',null)">Full View →</button></div>
+        <div class="card-body" style="padding:14px">
+          <div class="pred-list">
+            <div class="pred-item" onclick="showBinModal('A07','Zone A','97%','Wet','High','2 min ago','Critical','Unassigned','3.1V','Good')"><div class="pred-id" style="color:var(--red)">A07</div><div class="pred-info"><div class="pred-loc">Zone A · Currently 97%</div><div class="pred-time" style="color:var(--red)">Overflows in ~10 minutes</div></div><span class="urgency-tag utag-urgent">Urgent</span></div>
+            <div class="pred-item" onclick="showBinModal('B09','Zone B','82%','Moist','None','5 min ago','High','Unassigned','3.5V','Good')"><div class="pred-id" style="color:var(--amber)">B09</div><div class="pred-info"><div class="pred-loc">Zone B · Currently 82%</div><div class="pred-time" style="color:var(--amber-dk)">Overflows in ~45 minutes</div></div><span class="urgency-tag utag-soon">Soon</span></div>
+            <div class="pred-item"><div class="pred-id" style="color:var(--blue)">E02</div><div class="pred-info"><div class="pred-loc">Zone E · Currently 76%</div><div class="pred-time" style="color:var(--blue)">Overflows in ~1.5 hours</div></div><span class="urgency-tag utag-watch">Watch</span></div>
+            <div class="pred-item"><div class="pred-id" style="color:var(--green)">C06</div><div class="pred-info"><div class="pred-loc">Zone C · Currently 58%</div><div class="pred-time" style="color:var(--green)">Overflows in ~3 hours</div></div><span class="urgency-tag utag-ok">Fine Now</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">📊 Sector Risk Comparison</div><div class="card-subtitle">Overflow incidents by zone this week</div></div></div>
+        <div class="card-body"><div class="chart-box"><canvas id="sectorChart"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- ZONE PERFORMANCE -->
+    <div class="sec-heading"><h3>Zone Performance</h3><p>Click any zone to explore its bins and drill into details</p></div>
+    <div class="zone-grid" id="zoneGrid"></div>
+
+  </section><!-- /home -->
+
+  <!-- ══════ BINS SECTION ══════ -->
+  <section class="section" id="sec-bins">
+    <div class="breadcrumb">
+      <span class="crumb" onclick="goSection('home',null)">Home</span>
+      <span class="bc-sep">›</span><span class="crumb current">All Bins</span>
+    </div>
+    <div class="card">
+      <div class="table-controls">
+        <input class="search-input" type="text" placeholder="🔍  Search by Bin ID or Zone..." oninput="filterBinTable(this.value)">
+        <select class="fsel" onchange="sortBins(this.value)">
+          <option value="id">Sort by Bin ID</option>
+          <option value="fill_desc">Highest Fill %</option>
+          <option value="pred">Soonest Predicted Overflow</option>
+        </select>
+        <select class="fsel" id="binStatusFilter" onchange="filterBins(this.value,'status')">
+          <option value="">All Status</option><option>Critical</option><option>Warning</option><option>Normal</option><option>Offline</option>
+        </select>
+        <select class="fsel" onchange="filterBins(this.value,'assign')">
+          <option value="">All Assignment</option><option value="Assigned">Assigned</option><option value="Unassigned">Unassigned</option>
+        </select>
+        <div style="margin-left:auto;font-size:12px;color:var(--text3);font-weight:500" id="binCount">Showing 12 bins</div>
+      </div>
+      <div class="tscroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Bin ID</th><th>Sector</th><th>Fill Level</th><th>Fill %</th>
+              <th>Moisture</th><th>PIR Activity</th><th>Status</th>
+              <th>Overflow Prediction</th><th>Staff Assigned</th><th>Last Collection</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="binTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════ ALERTS SECTION ══════ -->
+  <section class="section" id="sec-alerts">
+    <div class="breadcrumb">
+      <span class="crumb" onclick="goSection('home',null)">Home</span>
+      <span class="bc-sep">›</span><span class="crumb current">Alerts</span>
+    </div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Critical</div><div class="kpi-icon" style="background:var(--red-lt)">🚨</div></div><div class="kpi-num" style="color:var(--red)">2</div><div class="kpi-sub">Overflow or dumping risk</div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Warnings</div><div class="kpi-icon" style="background:var(--amber-lt)">⚠️</div></div><div class="kpi-num" style="color:var(--amber)">3</div><div class="kpi-sub">Filling fast or wet bins</div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Info</div><div class="kpi-icon" style="background:var(--blue-lt)">ℹ️</div></div><div class="kpi-num" style="color:var(--blue)">2</div><div class="kpi-sub">Animal activity or offline</div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Resolved Today</div><div class="kpi-icon" style="background:var(--green-lt)">✅</div></div><div class="kpi-num" style="color:var(--green)">9</div><div class="kpi-sub">Closed alerts this morning</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">🔔 All Active Alerts</div><div class="card-subtitle">Ordered by severity. Resolve alerts from top to bottom.</div></div>
+        <div class="card-actions">
+          <select class="fsel" style="font-size:12px"><option>All Types</option><option>Overflow</option><option>Moisture</option><option>Dumping</option><option>Animal</option></select>
+          <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="showToast('success','✅ Exported','Alert list downloaded as CSV')">⬇ Export</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:14px">
+        <div class="alerts-list">
+          <div class="alert-row level-critical"><div class="alert-indicator"></div><div class="alert-body"><div class="alert-title">🗑️ Bin A07 — 97% Full, Overflow Predicted in 10 min</div><div class="alert-desc">Zone A Block 3 near the canteen. Motion also detected. Needs immediate collection.</div><div class="alert-time">2 minutes ago · Zone A · Unassigned</div></div><button class="alert-action" onclick="openAssignModal()">Assign →</button></div>
+          <div class="alert-row level-critical"><div class="alert-indicator"></div><div class="alert-body"><div class="alert-title">⚡ Bin B12 — Fill jumped 65% in 12 minutes</div><div class="alert-desc">Abnormal fill rate. Possible illegal large-item dumping. Review camera footage.</div><div class="alert-time">15 minutes ago · Zone B · Unassigned</div></div><button class="alert-action" onclick="showBinModal('B12','Zone B','89%','Dry','High','15 min ago','Critical','Unassigned','3.4V','Good')">Investigate →</button></div>
+          <div class="alert-row level-warning"><div class="alert-indicator"></div><div class="alert-body"><div class="alert-title">💧 Bin C03 — Wet Waste Detected (5 hrs)</div><div class="alert-desc">Persistent moisture — health hazard, mosquito breeding risk. Needs immediate inspection.</div><div class="alert-time">8 minutes ago · Zone C · Unassigned</div></div><button class="alert-action">Inspect →</button></div>
+          <div class="alert-row level-warning"><div class="alert-indicator"></div><div class="alert-body"><div class="alert-title">⏱️ Bin B09 — Overflow Predicted in 45 min</div><div class="alert-desc">82% full and filling steadily. Collection should happen before 3:00 PM.</div><div class="alert-time">5 minutes ago · Zone B · Unassigned</div></div><button class="alert-action" onclick="openAssignModal()">Assign →</button></div>
+          <div class="alert-row level-warning"><div class="alert-indicator"></div><div class="alert-body"><div class="alert-title">💧 Bin B05 — Wet for 3+ Hours</div><div class="alert-desc">Standing moisture in Zone B bin. Health risk if left untreated.</div><div class="alert-time">32 minutes ago · Zone B · Unassigned</div></div><button class="alert-action">Inspect →</button></div>
+          <div class="alert-row level-info"><div class="alert-indicator"></div><div class="alert-body"><div class="alert-title">🐾 Bin D05 — Repeated Animal Activity</div><div class="alert-desc">PIR sensor triggered 7 times in the last hour. Possible dog or stray animal access.</div><div class="alert-time">22 minutes ago · Zone D · Unassigned</div></div><button class="alert-action">Dispatch →</button></div>
+          <div class="alert-row level-info"><div class="alert-indicator"></div><div class="alert-body"><div class="alert-title">🔋 Sensor E08 — Low Battery &amp; Offline</div><div class="alert-desc">Device went offline at 12:45 PM. Battery at 2.9V. Needs replacement.</div><div class="alert-time">47 minutes ago · Zone E · Maintenance</div></div><button class="alert-action">Schedule Fix →</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════ PREDICTIONS SECTION ══════ -->
+  <section class="section" id="sec-predictions">
+    <div class="breadcrumb">
+      <span class="crumb" onclick="goSection('home',null)">Home</span>
+      <span class="bc-sep">›</span><span class="crumb current">Predictions &amp; Insights</span>
+    </div>
+
+    <div class="row-equal">
+      <div class="pred-insight danger"><div class="pred-insight-num" style="color:var(--red)">2</div><div class="pred-insight-label">Overflow within 30 minutes</div><div class="pred-insight-desc">Bins A07 and B12 need collection now. Assign staff immediately.</div></div>
+      <div class="pred-insight warning"><div class="pred-insight-num" style="color:var(--amber)">3</div><div class="pred-insight-label">Wet-risk in next 2 hours</div><div class="pred-insight-desc">Bins C03, B05, and D07 showing moisture trend. Health risk forming.</div></div>
+      <div class="pred-insight info"><div class="pred-insight-num" style="color:var(--blue)">4</div><div class="pred-insight-label">High-demand sectors this evening</div><div class="pred-insight-desc">Zone B and Zone A expected to peak between 5–7 PM based on past patterns.</div></div>
+    </div>
+
+    <div class="row2">
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">📈 Fill Trend + Forecast</div><div class="card-subtitle">Current fill level with predicted trajectory</div></div></div>
+        <div class="card-body"><div class="chart-box" style="height:230px"><canvas id="predFillChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">🔥 Peak Collection Hours</div><div class="card-subtitle">Heatmap by sector and time of day</div></div></div>
+        <div class="card-body"><div id="heatmapWrap"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">🗓️ Overflow Risk by Sector (This Week)</div><div class="card-subtitle">Bars show overflow incidents per zone</div></div></div>
+      <div class="card-body"><div class="chart-box"><canvas id="weeklyBarChart"></canvas></div></div>
+    </div>
+  </section>
+
+  <!-- ══════ ASSIGNMENT SECTION ══════ -->
+  <section class="section" id="sec-assignment">
+    <div class="breadcrumb">
+      <span class="crumb" onclick="goSection('home',null)">Home</span>
+      <span class="bc-sep">›</span><span class="crumb current">Collection Assignment Center</span>
+    </div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Pending Bins</div><div class="kpi-icon" style="background:var(--red-lt)">📌</div></div><div class="kpi-num" style="color:var(--red)">4</div><div class="kpi-sub">Awaiting assignment</div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Staff Available</div><div class="kpi-icon" style="background:var(--green-lt)">👷</div></div><div class="kpi-num" style="color:var(--green)">5</div><div class="kpi-sub">Ready to be assigned</div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">On Route</div><div class="kpi-icon" style="background:var(--blue-lt)">🚛</div></div><div class="kpi-num" style="color:var(--blue)">3</div><div class="kpi-sub">Currently collecting</div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Completed Today</div><div class="kpi-icon" style="background:var(--green-lt)">✅</div></div><div class="kpi-num" style="color:var(--green)">12</div><div class="kpi-sub">Pickups done</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">📋 Assignment Center</div><div class="card-subtitle">Select a bin, choose a staff member, and assign in 2 clicks</div></div></div>
+      <div class="card-body">
+        <div class="assign-layout">
+          <div>
+            <div class="assign-col-title">📌 Pending Bins — Select to Assign</div>
+            <div class="pending-bin" onclick="selectBinToAssign(this,'A07','Zone A','97%')"><div><span class="tag tag-red">Critical</span></div><div style="flex:1;margin:0 10px"><div style="font-weight:700;font-size:13px">Bin A07 · Zone A</div><div style="font-size:12px;color:var(--text3);margin-top:2px">97% full — overflow in ~10 min</div></div></div>
+            <div class="pending-bin" onclick="selectBinToAssign(this,'B12','Zone B','89%')"><div><span class="tag tag-red">Critical</span></div><div style="flex:1;margin:0 10px"><div style="font-weight:700;font-size:13px">Bin B12 · Zone B</div><div style="font-size:12px;color:var(--text3);margin-top:2px">89% — rapid fill detected</div></div></div>
+            <div class="pending-bin" onclick="selectBinToAssign(this,'B09','Zone B','82%')"><div><span class="tag tag-amber">Warning</span></div><div style="flex:1;margin:0 10px"><div style="font-weight:700;font-size:13px">Bin B09 · Zone B</div><div style="font-size:12px;color:var(--text3);margin-top:2px">82% — overflow in ~45 min</div></div></div>
+            <div class="pending-bin" onclick="selectBinToAssign(this,'C03','Zone C','45%')"><div><span class="tag tag-teal">Wet Risk</span></div><div style="flex:1;margin:0 10px"><div style="font-weight:700;font-size:13px">Bin C03 · Zone C</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Moisture detected — health risk</div></div></div>
+          </div>
+          <div>
+            <div class="assign-col-title">👷 Available Staff — Select to Assign</div>
+            <div class="staff-card" onclick="selectStaff(this,'J. Perera')"><div class="staff-avatar" style="background:linear-gradient(135deg,#3b82f6,#6366f1)">JP</div><div style="flex:1"><div class="staff-name">J. Perera</div><div class="staff-status status-avail">● Available</div><div class="staff-workload">Zone A specialist · 0 active bins</div></div><span class="tag tag-green">Best Match</span></div>
+            <div class="staff-card" onclick="selectStaff(this,'S. Fernando')"><div class="staff-avatar" style="background:linear-gradient(135deg,#10b981,#059669)">SF</div><div style="flex:1"><div class="staff-name">S. Fernando</div><div class="staff-status status-avail">● Available</div><div class="staff-workload">Zone B &amp; C · 1 active bin</div></div></div>
+            <div class="staff-card" onclick="selectStaff(this,'R. Bandara')"><div class="staff-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">RB</div><div style="flex:1"><div class="staff-name">R. Bandara</div><div class="staff-status status-route">▶ On Route</div><div class="staff-workload">Zone B · 2 active bins</div></div></div>
+            <div class="staff-card" onclick="selectStaff(this,'M. Rajapaksa')"><div class="staff-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)">MR</div><div style="flex:1"><div class="staff-name">M. Rajapaksa</div><div class="staff-status status-avail">● Available</div><div class="staff-workload">Zone D &amp; E · 0 active bins</div></div></div>
+            <div style="margin-top:14px">
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:14px;font-size:13px;color:var(--text3)" id="assignPreview">
+                👆 Select a bin and a staff member above to preview the assignment.
+              </div>
+              <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px" onclick="confirmAssign()" id="confirmAssignBtn" disabled>✔ Confirm Assignment</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════ ANALYTICS SECTION ══════ -->
+  <section class="section" id="sec-analytics">
+    <div class="breadcrumb"><span class="crumb" onclick="goSection('home',null)">Home</span><span class="bc-sep">›</span><span class="crumb current">Reports &amp; Analytics</span></div>
+    <div class="tab-bar">
+      <div class="tab-item active" onclick="switchTab(this,'tab-overview')">Overview</div>
+      <div class="tab-item" onclick="switchTab(this,'tab-sectors')">Sector Comparison</div>
+      <div class="tab-item" onclick="switchTab(this,'tab-trends')">Weekly Trends</div>
+      <div class="tab-item" onclick="switchTab(this,'tab-devices-tab')">Device Health</div>
+    </div>
+    <div id="tab-overview">
+      <div class="row2">
+        <div class="card"><div class="card-header"><div><div class="card-title">📉 Weekly Overflow Incidents</div><div class="card-subtitle">Number of overflow events per day this week</div></div></div><div class="card-body"><div class="chart-box"><canvas id="weeklyLine"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><div><div class="card-title">⏱ Response Time Trend</div><div class="card-subtitle">Average minutes to respond to a critical alert</div></div></div><div class="card-body"><div class="chart-box"><canvas id="responseChart"></canvas></div></div></div>
+      </div>
+      <div class="row2">
+        <div class="card"><div class="card-header"><div><div class="card-title">🌊 Wet-Risk Incidents Trend</div><div class="card-subtitle">Moisture-related alerts over 7 days</div></div></div><div class="card-body"><div class="chart-box"><canvas id="wetChart"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><div><div class="card-title">🏅 On-Time Collection Rate</div><div class="card-subtitle">% of collections done before overflow</div></div></div><div class="card-body"><div class="chart-box"><canvas id="otcChart"></canvas></div></div></div>
+      </div>
+    </div>
+    <div id="tab-sectors" style="display:none">
+      <div class="card"><div class="card-header"><div><div class="card-title">📊 Zone Comparison</div><div class="card-subtitle">Overflow events, avg fill %, and wet incidents per zone</div></div></div><div class="card-body"><div class="chart-box" style="height:280px"><canvas id="sectorCompareChart"></canvas></div></div></div>
+    </div>
+    <div id="tab-trends" style="display:none">
+      <div class="card"><div class="card-header"><div><div class="card-title">📅 Fill % Heatmap by Hour &amp; Zone</div><div class="card-subtitle">Darker = higher average fill level</div></div></div><div class="card-body"><div id="analyticsHeatmap"></div></div></div>
+    </div>
+    <div id="tab-devices-tab" style="display:none">
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">All Sensors</div><div class="kpi-icon" style="background:var(--blue-lt)">📡</div></div><div class="kpi-num" style="color:var(--blue)">52</div><div class="kpi-sub">Deployed on campus</div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Online</div><div class="kpi-icon" style="background:var(--green-lt)">✅</div></div><div class="kpi-num" style="color:var(--green)">48</div><div class="kpi-sub">Reporting normally</div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Low Battery</div><div class="kpi-icon" style="background:var(--amber-lt)">🔋</div></div><div class="kpi-num" style="color:var(--amber)">6</div><div class="kpi-sub">Need replacement soon</div></div>
+        <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Offline</div><div class="kpi-icon" style="background:var(--red-lt)">❌</div></div><div class="kpi-num" style="color:var(--red)">4</div><div class="kpi-sub">Not responding</div></div>
+      </div>
+      <div class="card"><div class="card-header"><div><div class="card-title">📡 All Sensors</div></div></div><div class="card-body"><div class="device-list" id="deviceList"></div></div></div>
+    </div>
+  </section>
+
+  <!-- ══════ MAP SECTION ══════ -->
+  <section class="section" id="sec-map">
+    <div class="breadcrumb"><span class="crumb" onclick="goSection('home',null)">Home</span><span class="bc-sep">›</span><span class="crumb current">Live Map</span></div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">🗺️ Full Campus Map</div><div class="card-subtitle">Real-time bin locations and status</div></div></div>
+      <div class="card-body" style="padding:14px">
+        <div class="map-wrap" style="height:500px;background:linear-gradient(135deg,#e8eefd,#dce8f6)">
+          <div class="map-grid"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:14px;font-weight:600">🗺️ Full interactive Leaflet map would render here in production</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════ DEVICES SECTION ══════ -->
+  <section class="section" id="sec-devices">
+    <div class="breadcrumb"><span class="crumb" onclick="goSection('home',null)">Home</span><span class="bc-sep">›</span><span class="crumb current">Sensors &amp; Devices</span></div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">All Sensors</div><div class="kpi-icon" style="background:var(--blue-lt)">📡</div></div><div class="kpi-num" style="color:var(--blue)">52</div><div class="kpi-sub">Deployed on campus</div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Online</div><div class="kpi-icon" style="background:var(--green-lt)">✅</div></div><div class="kpi-num" style="color:var(--green)">48</div><div class="kpi-sub">Reporting normally</div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Low Battery</div><div class="kpi-icon" style="background:var(--amber-lt)">🔋</div></div><div class="kpi-num" style="color:var(--amber)">6</div><div class="kpi-sub">Need replacement soon</div></div>
+      <div class="kpi-card"><div class="kpi-top"><div class="kpi-label">Offline</div><div class="kpi-icon" style="background:var(--red-lt)">❌</div></div><div class="kpi-num" style="color:var(--red)">4</div><div class="kpi-sub">Not responding</div></div>
+    </div>
+    <div class="card"><div class="card-header"><div><div class="card-title">📡 All Sensors &amp; Devices</div></div></div><div class="card-body"><div class="device-list" id="deviceList2"></div></div></div>
+  </section>
+
+  <!-- ══════ SETTINGS SECTION ══════ -->
+  <section class="section" id="sec-settings">
+    <div class="breadcrumb"><span class="crumb" onclick="goSection('home',null)">Home</span><span class="bc-sep">›</span><span class="crumb current">Settings</span></div>
+    <div class="card" style="max-width:580px">
+      <div class="card-header"><div><div class="card-title">⚙️ Alert Thresholds</div><div class="card-subtitle">Adjust when you want the system to notify you</div></div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="settings-group"><label class="setting-label">🚨 Send "Overflow" alert when bin reaches (%)</label><div class="range-row"><input type="range" min="50" max="100" value="85" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="range-val" style="color:var(--red)">85%</span></div></div>
+          <div class="settings-group"><label class="setting-label">⚠️ Send "Getting full" warning at (%)</label><div class="range-row"><input type="range" min="30" max="90" value="65" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="range-val" style="color:var(--amber)">65%</span></div></div>
+          <div class="settings-group"><label class="setting-label">🐾 Alert for motion activity after this many triggers per hour</label><div class="range-row"><input type="range" min="1" max="20" value="5" oninput="this.nextElementSibling.textContent=this.value+' times'"><span class="range-val" style="color:var(--blue)">5 times</span></div></div>
+          <div class="settings-group"><label class="setting-label">🔋 Alert when sensor battery drops below (Volts)</label><div class="range-row"><input type="range" min="2.5" max="4.0" step="0.1" value="3.2" oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)+'V'"><span class="range-val" style="color:var(--green)">3.2V</span></div></div>
+          <button class="btn btn-primary" style="width:fit-content" onclick="showToast('success','✅ Settings Saved','Your alert preferences have been updated.')">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /content -->
+</main>
+</div><!-- /shell -->
+
+<!-- ═══════ BIN MODAL ═══════ -->
+<div class="overlay" id="binModal" onclick="closeModal(event,'binModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="binModalTitle">Bin Details</div>
+      <button class="modal-close" onclick="document.getElementById('binModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="binModalBody"></div>
+  </div>
+</div>
+
+<!-- ═══════ ASSIGN MODAL ═══════ -->
+<div class="overlay" id="assignModal" onclick="closeModal(event,'assignModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🚛 Assign Collection Pickup</div>
+      <button class="modal-close" onclick="document.getElementById('assignModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Select Bin</label>
+          <select class="fsel" style="width:100%;padding:9px 12px">
+            <option>Bin A07 · Zone A · 97% Full (URGENT)</option>
+            <option>Bin B12 · Zone B · 89% Full (Rapid Fill)</option>
+            <option>Bin B09 · Zone B · 82% Full</option>
+            <option>Bin C03 · Zone C · Wet Risk</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Assign Staff Member</label>
+          <select class="fsel" style="width:100%;padding:9px 12px">
+            <option>J. Perera — Available (Zone A specialist) ⭐ Best Match</option>
+            <option>S. Fernando — Available (Zone B &amp; C)</option>
+            <option>M. Rajapaksa — Available (Zone D &amp; E)</option>
+            <option>R. Bandara — On Route (Zone B)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Priority Level</label>
+          <select class="fsel" style="width:100%;padding:9px 12px">
+            <option>🔴 Urgent — Collect within 15 minutes</option>
+            <option>🟡 High — Collect within 1 hour</option>
+            <option>🟢 Normal — Collect today</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="confirmModalAssign()">✔ Confirm Assignment</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('assignModal').classList.remove('open')">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ TOAST ═══════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ══════════════════════════════════
+   DATA
+══════════════════════════════════ */
+const BIN_DATA = [
+  {id:'A07',zone:'Zone A',fill:97,moisture:'Wet',pir:'High',status:'Critical',pred:'~10 min',staff:'Unassigned',lastCol:'3 hrs ago',bat:3.1,signal:4},
+  {id:'A03',zone:'Zone A',fill:72,moisture:'Dry',pir:'None',status:'Warning',pred:'~2 hrs',staff:'J. Perera',lastCol:'18 min ago',bat:3.8,signal:5},
+  {id:'A01',zone:'Zone A',fill:28,moisture:'Dry',pir:'None',status:'Normal',pred:'~8 hrs',staff:'N/A',lastCol:'2 hrs ago',bat:4.0,signal:5},
+  {id:'B12',zone:'Zone B',fill:89,moisture:'Dry',pir:'High',status:'Critical',pred:'~30 min',staff:'Unassigned',lastCol:'1 hr ago',bat:3.4,signal:4},
+  {id:'B09',zone:'Zone B',fill:82,moisture:'Moist',pir:'None',status:'Warning',pred:'~45 min',staff:'Unassigned',lastCol:'2 hrs ago',bat:3.5,signal:5},
+  {id:'B05',zone:'Zone B',fill:55,moisture:'Wet',pir:'None',status:'Warning',pred:'~3 hrs',staff:'Unassigned',lastCol:'4 hrs ago',bat:3.6,signal:4},
+  {id:'C03',zone:'Zone C',fill:45,moisture:'Wet',pir:'None',status:'Warning',pred:'~5 hrs',staff:'Unassigned',lastCol:'30 min ago',bat:3.7,signal:5},
+  {id:'C01',zone:'Zone C',fill:30,moisture:'Dry',pir:'None',status:'Normal',pred:'~8 hrs',staff:'N/A',lastCol:'1 hr ago',bat:3.9,signal:5},
+  {id:'D05',zone:'Zone D',fill:38,moisture:'Dry',pir:'Very High',status:'PIR Alert',pred:'—',staff:'Unassigned',lastCol:'45 min ago',bat:3.3,signal:3},
+  {id:'D01',zone:'Zone D',fill:22,moisture:'Dry',pir:'None',status:'Normal',pred:'~10 hrs',staff:'N/A',lastCol:'45 min ago',bat:4.0,signal:5},
+  {id:'E02',zone:'Zone E',fill:76,moisture:'Dry',pir:'None',status:'Warning',pred:'~1.5 hrs',staff:'S. Fernando',lastCol:'10 min ago',bat:3.6,signal:4},
+  {id:'E08',zone:'Zone E',fill:0,moisture:'—',pir:'—',status:'Offline',pred:'—',staff:'N/A',lastCol:'Offline',bat:2.9,signal:0},
+];
+
+const DEVICE_DATA = [
+  {id:'S-A07',zone:'Zone A',name:'Bin A07 Sensor',battery:31,signal:4,status:'Online',type:'Fill + PIR + Moisture'},
+  {id:'S-B12',zone:'Zone B',name:'Bin B12 Sensor',battery:54,signal:4,status:'Online',type:'Fill + PIR'},
+  {id:'S-C03',zone:'Zone C',name:'Bin C03 Sensor',battery:70,signal:5,status:'Online',type:'Fill + Moisture'},
+  {id:'S-D05',zone:'Zone D',name:'Bin D05 Sensor',battery:33,signal:3,status:'Online',type:'Fill + PIR'},
+  {id:'S-E08',zone:'Zone E',name:'Bin E08 Sensor',battery:12,signal:0,status:'Offline',type:'Fill + PIR + Moisture'},
+  {id:'S-B09',zone:'Zone B',name:'Bin B09 Sensor',battery:65,signal:5,status:'Online',type:'Fill + Moisture'},
+];
+
+/* ══════════════════════════════════
+   NAVIGATION
+══════════════════════════════════ */
+let activeTab = 'tab-overview';
+function goSection(id, navEl) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(navEl) navEl.classList.add('active');
+  const titles = {
+    home:'Smart Bin Monitoring & Predictive Collection Dashboard',
+    map:'Live Campus Map',bins:'All Bins',
+    alerts:'Active Alerts',predictions:'Predictions & Insights',
+    assignment:'Collection Assignment Center',analytics:'Reports & Analytics',
+    devices:'Sensors & Devices',settings:'Settings',
+  };
+  document.getElementById('pageTitle').textContent = titles[id] || 'Dashboard';
+}
+
+function switchTab(el,tabId){
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['tab-overview','tab-sectors','tab-trends','tab-devices-tab'].forEach(t=>{
+    const el2 = document.getElementById(t);
+    if(el2) el2.style.display = (t===tabId)?'block':'none';
+  });
+  if(tabId==='tab-sectors') setTimeout(()=>buildSectorCompare(),100);
+  if(tabId==='tab-trends') setTimeout(()=>buildAnalyticsHeatmap(),100);
+}
+
+/* ══════════════════════════════════
+   LIVE CLOCK
+══════════════════════════════════ */
+function updateClock(){
+  const now = new Date();
+  document.getElementById('liveTime').textContent =
+    now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) + ' · ' +
+    now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+updateClock(); setInterval(updateClock,10000);
+
+/* ══════════════════════════════════
+   TOAST
+══════════════════════════════════ */
+function showToast(type,title,msg){
+  const icons={success:'✅',info:'💡',warning:'⚠️',error:'❌'};
+  const container = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className='toast';
+  t.innerHTML=`<div class="toast-icon">${icons[type]||'💬'}</div><div><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>`;
+  container.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(24px)';setTimeout(()=>t.remove(),320)},3500);
+}
+
+/* ══════════════════════════════════
+   SPARKLINES
+══════════════════════════════════ */
+function renderSparkline(elId,data,color){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const max = Math.max(...data);
+  el.innerHTML = data.map(v=>`<div class="spark-bar" style="height:${Math.max(3,Math.round(v/max*26))}px;background:${color}"></div>`).join('');
+}
+renderSparkline('sp1',[2,3,2,4,3,5,5],'var(--red)');
+renderSparkline('sp2',[1,2,3,2,3,3,3],'var(--amber)');
+renderSparkline('sp3',[3,2,4,3,4,4,4],'var(--purple)');
+renderSparkline('sp4',[18,16,17,15,14,14,14],'var(--blue)');
+renderSparkline('sp5',[86,88,89,90,91,91,91],'var(--green)');
+renderSparkline('sp6',[4,5,6,5,6,6,6],'var(--teal)');
+renderSparkline('sp7',[8,7,7,6,6,6,6],'#9ca3af');
+renderSparkline('sp8',[6,7,8,8,8,8,8],'var(--green)');
+
+/* ══════════════════════════════════
+   CHARTS
+══════════════════════════════════ */
+const chartDefaults = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2a50',titleFont:{family:'Nunito',weight:'700',size:13},bodyFont:{family:'DM Sans',size:12},padding:11,cornerRadius:10,displayColors:false}},
+};
+
+// Fill Chart
+let fillChart;
+function initFillChart(){
+  const ctx = document.getElementById('fillChart');
+  if(!ctx) return;
+  const labels = ['6am','8am','10am','12pm','2pm','4pm','6pm','8pm'];
+  fillChart = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Avg Fill %',data:[32,38,48,59,68,72,78,75],borderColor:'#16c47f',backgroundColor:'rgba(22,196,127,.08)',tension:.45,fill:true,borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#16c47f'},
+        {label:'Critical Threshold',data:[85,85,85,85,85,85,85,85],borderColor:'rgba(239,68,68,.4)',borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false},
+      ]
+    },
+    options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{font:{family:'DM Sans',size:12},boxWidth:12,color:'#4a5779'}}},scales:{x:{grid:{color:'rgba(228,234,245,.7)'},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}},y:{min:0,max:100,grid:{color:'rgba(228,234,245,.7)'},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11},callback:v=>v+'%'}}}}
+  });
+}
+
+function updateFillChart(zone){
+  if(!fillChart) return;
+  const allData = [32,38,48,59,68,72,78,75];
+  const aData = [28,34,44,55,65,70,75,70];
+  const bData = [40,47,58,70,80,85,88,82];
+  const cData = [25,30,38,44,52,58,62,58];
+  const map = {all:allData,A:aData,B:bData,C:cData};
+  fillChart.data.datasets[0].data = map[zone] || allData;
+  fillChart.update();
+}
+
+// Donut Chart
+function initDonutChart(){
+  const ctx = document.getElementById('donutChart');
+  if(!ctx) return;
+  new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:['Critical','Filling','Good','Offline'],datasets:[{data:[5,20,23,4],backgroundColor:['#ef4444','#f59e0b','#16c47f','#cbd5e1'],borderWidth:0,hoverOffset:6}]},
+    options:{...chartDefaults,cutout:'68%',plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+c.raw+' bins'}}}}
+  });
+}
+
+// Sector Chart
+function initSectorChart(){
+  const ctx = document.getElementById('sectorChart');
+  if(!ctx) return;
+  new Chart(ctx,{
+    type:'bar',
+    data:{labels:['Zone A','Zone B','Zone C','Zone D','Zone E'],datasets:[{label:'Overflow Incidents',data:[3,7,2,1,4],backgroundColor:['rgba(239,68,68,.75)','rgba(239,68,68,.85)','rgba(22,196,127,.7)','rgba(22,196,127,.6)','rgba(245,158,11,.75)'],borderRadius:8,borderWidth:0}]},
+    options:{...chartDefaults,scales:{x:{grid:{display:false},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}},y:{grid:{color:'rgba(228,234,245,.7)'},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}}}}
+  });
+}
+
+// Prediction chart
+function initPredFillChart(){
+  const ctx = document.getElementById('predFillChart');
+  if(!ctx) return;
+  new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:['Now','30m','1h','1.5h','2h','2.5h','3h'],
+      datasets:[
+        {label:'Current Fill (Bin A07)',data:[97,null,null,null,null,null,null],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.08)',tension:.4,fill:true,borderWidth:2.5,pointRadius:6,pointBackgroundColor:'#ef4444'},
+        {label:'Predicted (Bin B09)',data:[82,88,94,100,null,null,null],borderColor:'#f59e0b',borderDash:[5,4],tension:.4,fill:false,borderWidth:2,pointRadius:3,pointBackgroundColor:'#f59e0b'},
+        {label:'Predicted (Bin E02)',data:[76,79,82,86,90,95,100],borderColor:'#3b82f6',borderDash:[5,4],tension:.4,fill:false,borderWidth:2,pointRadius:3,pointBackgroundColor:'#3b82f6'},
+      ]
+    },
+    options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{font:{family:'DM Sans',size:11},boxWidth:10,color:'#4a5779'}}},scales:{x:{grid:{color:'rgba(228,234,245,.7)'},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}},y:{min:0,max:110,grid:{color:'rgba(228,234,245,.7)'},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11},callback:v=>v+'%'}}}}
+  });
+}
+
+// Analytics charts
+function initWeeklyLine(){
+  const ctx = document.getElementById('weeklyLine');
+  if(!ctx) return;
+  new Chart(ctx,{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Overflow Events',data:[4,3,5,2,6,3,5],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.07)',tension:.4,fill:true,borderWidth:2,pointRadius:5,pointBackgroundColor:'#ef4444'}]},options:{...chartDefaults,scales:{x:{grid:{display:false},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}},y:{grid:{color:'rgba(228,234,245,.7)'},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}}}}});
+}
+function initResponseChart(){
+  const ctx = document.getElementById('responseChart');
+  if(!ctx) return;
+  new Chart(ctx,{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Avg Response (min)',data:[18,17,19,16,15,14,14],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.07)',tension:.4,fill:true,borderWidth:2,pointRadius:5,pointBackgroundColor:'#3b82f6'}]},options:{...chartDefaults,scales:{x:{grid:{display:false},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}},y:{grid:{color:'rgba(228,234,245,.7)'},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11},callback:v=>v+' min'}}}}});
+}
+function initWetChart(){
+  const ctx = document.getElementById('wetChart');
+  if(!ctx) return;
+  new Chart(ctx,{type:'bar',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Wet Incidents',data:[2,1,3,2,4,3,6],backgroundColor:'rgba(6,182,212,.65)',borderRadius:7,borderWidth:0}]},options:{...chartDefaults,scales:{x:{grid:{display:false},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}},y:{grid:{color:'rgba(228,234,245,.7)'},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}}}}});
+}
+function initOtcChart(){
+  const ctx = document.getElementById('otcChart');
+  if(!ctx) return;
+  new Chart(ctx,{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'On-time Rate %',data:[85,88,86,90,92,91,91],borderColor:'#16c47f',backgroundColor:'rgba(22,196,127,.07)',tension:.4,fill:true,borderWidth:2,pointRadius:5,pointBackgroundColor:'#16c47f'}]},options:{...chartDefaults,scales:{x:{grid:{display:false},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}},y:{min:70,max:100,grid:{color:'rgba(228,234,245,.7)'},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11},callback:v=>v+'%'}}}}});
+}
+function buildSectorCompare(){
+  const ctx = document.getElementById('sectorCompareChart');
+  if(!ctx) return;
+  new Chart(ctx,{type:'bar',data:{labels:['Zone A','Zone B','Zone C','Zone D','Zone E'],datasets:[{label:'Overflow Events',data:[3,7,2,1,4],backgroundColor:'rgba(239,68,68,.7)',borderRadius:6,borderWidth:0},{label:'Avg Fill %',data:[52,74,38,30,62],backgroundColor:'rgba(59,130,246,.65)',borderRadius:6,borderWidth:0},{label:'Wet Incidents',data:[1,3,2,0,1],backgroundColor:'rgba(6,182,212,.6)',borderRadius:6,borderWidth:0}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{font:{family:'DM Sans',size:12},boxWidth:12,color:'#4a5779'}}},scales:{x:{grid:{display:false},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}},y:{grid:{color:'rgba(228,234,245,.7)'},ticks:{color:'#8c97b5',font:{family:'DM Sans',size:11}}}}}});
+}
+
+/* ══════════════════════════════════
+   HEATMAP
+══════════════════════════════════ */
+function buildHeatmap(containerId){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const zones = ['Zone A','Zone B','Zone C','Zone D','Zone E'];
+  const hours = ['6am','8am','10am','12pm','2pm','4pm','6pm','8pm','10pm'];
+  const vals = [
+    [30,35,45,60,65,72,75,68,40],
+    [38,45,58,75,82,88,90,80,50],
+    [22,28,35,45,50,58,60,50,30],
+    [18,22,30,38,42,45,48,40,25],
+    [28,35,48,62,70,75,78,70,42],
+  ];
+  const colors=['#e7faf2','#b6f0d8','#7de6bc','#22c88a','#16a570','#0e7a53','#0a5c3e'];
+  const grid = document.createElement('div');
+  grid.className='heatmap-grid';
+  grid.style.gridTemplateColumns=`80px repeat(${hours.length},1fr)`;
+
+  // Header
+  const blank = document.createElement('div');blank.className='hm-cell hm-header';grid.appendChild(blank);
+  hours.forEach(h=>{const c=document.createElement('div');c.className='hm-cell hm-header';c.textContent=h;c.style.textAlign='center';grid.appendChild(c);});
+
+  // Rows
+  zones.forEach((z,zi)=>{
+    const lbl = document.createElement('div');lbl.className='hm-cell hm-label';lbl.textContent=z;grid.appendChild(lbl);
+    hours.forEach((_,hi)=>{
+      const v = vals[zi][hi];
+      const ci = Math.min(6,Math.floor(v/15));
+      const c = document.createElement('div');c.className='hm-cell';
+      c.style.background=colors[ci];c.style.color=ci>3?'#fff':'rgba(0,0,0,.5)';
+      c.title=`${z} · ${hours[hi]} · ${v}% avg fill`;
+      grid.appendChild(c);
+    });
+  });
+  el.innerHTML='';el.appendChild(grid);
+}
+buildHeatmap('heatmapWrap');
+function buildAnalyticsHeatmap(){buildHeatmap('analyticsHeatmap');}
+
+/* ══════════════════════════════════
+   BIN TABLE
+══════════════════════════════════ */
+function statusTag(s){
+  const m={Critical:'tag-red',Warning:'tag-amber',Normal:'tag-green','PIR Alert':'tag-purple',Offline:'tag-gray'};
+  return `<span class="tag ${m[s]||'tag-gray'}">${s}</span>`;
+}
+function moistureTag(m){
+  const mp={Wet:'tag-blue',Moist:'tag-teal',Dry:'tag-green','—':'tag-gray'};
+  return `<span class="tag ${mp[m]||'tag-gray'}">${m}</span>`;
+}
+function fillBar(p){
+  const c = p>=85?'var(--red)':p>=65?'var(--amber)':'var(--green)';
+  return `<div style="display:flex;align-items:center;gap:7px"><div class="fill-bar"><div class="fill-progress" style="width:${p}%;background:${c}"></div></div><span style="font-size:12px;font-weight:700;color:${c}">${p}%</span></div>`;
+}
+function batBar(v){
+  const pct = Math.round((v-2.9)/1.1*100);
+  const c = pct<20?'var(--red)':pct<50?'var(--amber)':'var(--green)';
+  return `<div class="bat-bar"><div class="bat-fill" style="width:${Math.max(0,pct)}%;background:${c}"></div></div>`;
+}
+
+let filteredBins = [...BIN_DATA];
+function renderBinTable(){
+  const tbody = document.getElementById('binTableBody');
+  if(!tbody) return;
+  document.getElementById('binCount').textContent = `Showing ${filteredBins.length} bins`;
+  tbody.innerHTML = filteredBins.map(b=>`
+    <tr onclick="toggleExpandRow(this,'${b.id}')">
+      <td><strong style="font-family:Nunito,sans-serif;font-size:13px">${b.id}</strong></td>
+      <td>${b.zone}</td>
+      <td>${b.fill>0?fillBar(b.fill):'<span class="tag tag-gray">—</span>'}</td>
+      <td><strong style="font-size:12px">${b.fill||'—'}${b.fill?'%':''}</strong></td>
+      <td>${moistureTag(b.moisture)}</td>
+      <td><span style="font-size:12px;font-weight:600;color:${b.pir==='Very High'?'var(--red)':b.pir==='High'?'var(--amber)':'var(--text3)'}">${b.pir}</span></td>
+      <td>${statusTag(b.status)}</td>
+      <td><span style="font-size:12px;font-weight:600;color:${b.pred.includes('10')?'var(--red)':b.pred.includes('30')||b.pred.includes('45')?'var(--amber)':'var(--text3)'}">${b.pred}</span></td>
+      <td><span style="font-size:12px;font-weight:600;color:${b.staff==='Unassigned'?'var(--red)':'var(--green-dk)'}">${b.staff}</span></td>
+      <td style="font-size:12px;color:var(--text3)">${b.lastCol}</td>
+      <td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="event.stopPropagation();showBinModal('${b.id}','${b.zone}','${b.fill}%','${b.moisture}','${b.pir}','${b.lastCol}','${b.status}','${b.staff}','${b.bat}V','Good')">Details</button></td>
+    </tr>
+    <tr><td colspan="11" style="padding:0"><div class="expand-detail" id="expand-${b.id}">
+      <div class="expand-inner">
+        <div class="expand-block"><div class="expand-block-title">📊 Fill Trend</div><div style="font-size:12px;color:var(--text2)">Past 24h avg fill: ${b.fill}%<br>Highest this week: ${Math.min(100,b.fill+8)}%<br>Last collected: ${b.lastCol}</div></div>
+        <div class="expand-block"><div class="expand-block-title">🔋 Sensor Health</div><div style="font-size:12px;color:var(--text2)">Battery: ${b.bat}V ${batBar(b.bat)}<br>Signal: ${b.signal}/5<br>Status: ${b.status==='Offline'?'⛔ Offline':'✅ Online'}</div></div>
+        <div class="expand-block"><div class="expand-block-title">🧑‍🔧 Assignment</div><div style="font-size:12px;color:var(--text2);margin-bottom:8px">Staff: <strong>${b.staff}</strong><br>Last action: Collection scheduled</div><button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="openAssignModal()">Reassign</button></div>
+      </div>
+    </div></td></tr>
+  `).join('');
+}
+
+function toggleExpandRow(tr, binId){
+  const expandEl = document.getElementById('expand-'+binId);
+  if(!expandEl) return;
+  const isOpen = expandEl.classList.contains('open');
+  document.querySelectorAll('.expand-detail.open').forEach(e=>e.classList.remove('open'));
+  if(!isOpen) expandEl.classList.add('open');
+}
+function filterBinTable(q){
+  filteredBins = BIN_DATA.filter(b=>b.id.toLowerCase().includes(q.toLowerCase())||b.zone.toLowerCase().includes(q.toLowerCase()));
+  renderBinTable();
+}
+function sortBins(by){
+  if(by==='fill_desc') filteredBins.sort((a,b)=>b.fill-a.fill);
+  else if(by==='pred') filteredBins.sort((a,b)=>{const order={A07:0,B12:1,B09:2,E02:3};return (order[a.id]||99)-(order[b.id]||99);});
+  else filteredBins.sort((a,b)=>a.id.localeCompare(b.id));
+  renderBinTable();
+}
+function filterBins(val,type){
+  filteredBins = BIN_DATA.filter(b=>{
+    if(type==='status' && val && b.status!==val) return false;
+    if(type==='assign' && val && (val==='Assigned'?b.staff==='Unassigned'||b.staff==='N/A':b.staff!=='Unassigned')) return false;
+    return true;
+  });
+  renderBinTable();
+}
+renderBinTable();
+
+/* ══════════════════════════════════
+   DEVICE LIST
+══════════════════════════════════ */
+function renderDeviceList(containerId){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = DEVICE_DATA.map(d=>{
+    const bat = Math.round((d.battery-10)/70*100);
+    const bc = d.battery<20?'var(--red)':d.battery<50?'var(--amber)':'var(--green)';
+    const sigs = [1,2,3,4,5].map(i=>`<div class="sig-seg" style="height:${i*3}px;background:${i<=d.signal?'var(--green)':'var(--border)'}"></div>`).join('');
+    return `<div class="device-row">
+      <div class="device-id">${d.id}</div>
+      <div class="device-info">
+        <div class="device-name">${d.name}</div>
+        <div class="device-sub">${d.zone} · ${d.type}</div>
+      </div>
+      <div style="text-align:center">
+        <div class="bat-bar" style="margin-bottom:3px"><div class="bat-fill" style="width:${bat}%;background:${bc}"></div></div>
+        <div style="font-size:11px;color:var(--text3)">${d.battery}%</div>
+      </div>
+      <div class="signal-bar">${sigs}</div>
+      <span class="tag ${d.status==='Online'?'tag-green':'tag-red'}">${d.status}</span>
+    </div>`;
+  }).join('');
+}
+renderDeviceList('deviceList');
+renderDeviceList('deviceList2');
+
+/* ══════════════════════════════════
+   ZONE CARDS
+══════════════════════════════════ */
+const zones = [
+  {name:'Zone A',fill:62,bins:12,alerts:2,wet:0,color:'var(--amber)'},
+  {name:'Zone B',fill:78,bins:16,alerts:3,wet:2,color:'var(--red)'},
+  {name:'Zone C',fill:42,bins:10,alerts:1,wet:1,color:'var(--amber)'},
+  {name:'Zone D',fill:30,bins:8,alerts:1,wet:0,color:'var(--green)'},
+  {name:'Zone E',fill:55,bins:6,alerts:1,wet:0,color:'var(--amber)'},
+  {name:'Zone F',fill:22,bins:4,alerts:0,wet:0,color:'var(--green)'},
+];
+function renderZoneCards(){
+  const grid = document.getElementById('zoneGrid');
+  if(!grid) return;
+  grid.innerHTML = zones.map((z,i)=>`
+    <div class="zone-card" onclick="selectZone(this,'${z.name}')">
+      <div class="zone-header">
+        <div class="zone-name">${z.name}</div>
+        <span class="tag ${z.fill>=70?'tag-red':z.fill>=50?'tag-amber':'tag-green'}">${z.fill}% avg</span>
+      </div>
+      <div class="zone-fill-track"><div class="zone-fill-bar" style="width:${z.fill}%;background:${z.color}"></div></div>
+      <div class="zone-stats">
+        <span>🗑️ ${z.bins} bins</span>
+        <span>🔔 ${z.alerts} alerts</span>
+        <span>💧 ${z.wet} wet</span>
+      </div>
+    </div>
+  `).join('');
+}
+function selectZone(el, zoneName){
+  document.querySelectorAll('.zone-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  showToast('info',`📍 ${zoneName} selected`,'Click "All Bins" and filter by this zone to drill in.');
+}
+renderZoneCards();
+
+/* ══════════════════════════════════
+   BIN MODAL
+══════════════════════════════════ */
+function showBinModal(id,zone,fill,moisture,pir,lastCol,status,staff,bat,signal){
+  document.getElementById('binModalTitle').textContent = `🗑️ Bin ${id} — Details`;
+  const fillNum = parseInt(fill)||0;
+  const fc = fillNum>=85?'var(--red)':fillNum>=65?'var(--amber)':'var(--green)';
+  document.getElementById('binModalBody').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Fill Level</div>
+      <div style="height:12px;background:var(--bg);border-radius:6px;overflow:hidden;border:1px solid var(--border)"><div style="height:100%;width:${fillNum}%;background:${fc};border-radius:6px;transition:width .4s"></div></div>
+      <div style="font-family:Nunito,sans-serif;font-size:26px;font-weight:900;color:${fc};margin-top:4px">${fill}</div>
+    </div>
+    <div class="detail-row"><span class="detail-key">Bin ID</span><span class="detail-val">${id}</span></div>
+    <div class="detail-row"><span class="detail-key">Location</span><span class="detail-val">${zone}</span></div>
+    <div class="detail-row"><span class="detail-key">Moisture</span><span class="detail-val">${moisture}</span></div>
+    <div class="detail-row"><span class="detail-key">PIR Activity</span><span class="detail-val">${pir}</span></div>
+    <div class="detail-row"><span class="detail-key">Status</span><span class="detail-val">${status}</span></div>
+    <div class="detail-row"><span class="detail-key">Staff Assigned</span><span class="detail-val" style="color:${staff==='Unassigned'?'var(--red)':'var(--green-dk)'}">${staff}</span></div>
+    <div class="detail-row"><span class="detail-key">Last Collection</span><span class="detail-val">${lastCol}</span></div>
+    <div class="detail-row"><span class="detail-key">Battery</span><span class="detail-val">${bat}</span></div>
+    <div class="detail-row"><span class="detail-key">Signal</span><span class="detail-val">${signal}</span></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="document.getElementById('binModal').classList.remove('open');openAssignModal()">+ Assign Staff</button>
+      <button class="btn btn-ghost" onclick="showToast('info','🔔 Flagged','Bin ${id} has been flagged for inspection.')">🚩 Flag</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('binModal').classList.remove('open')">Close</button>
+    </div>
+  `;
+  document.getElementById('binModal').classList.add('open');
+}
+
+/* ══════════════════════════════════
+   ASSIGN MODAL
+══════════════════════════════════ */
+function openAssignModal(){
+  document.getElementById('assignModal').classList.add('open');
+}
+function confirmModalAssign(){
+  document.getElementById('assignModal').classList.remove('open');
+  showToast('success','✅ Assignment Confirmed','Pickup task has been assigned and staff notified.');
+  document.getElementById('alertBadge').textContent = Math.max(0,parseInt(document.getElementById('alertBadge').textContent)-1);
+}
+function closeModal(e,id){
+  if(e.target===document.getElementById(id)) document.getElementById(id).classList.remove('open');
+}
+
+/* ══════════════════════════════════
+   ASSIGNMENT PAGE LOGIC
+══════════════════════════════════ */
+let selectedBin=null,selectedStaff=null;
+function selectBinToAssign(el,id,zone,fill){
+  document.querySelectorAll('.pending-bin').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedBin={id,zone,fill};
+  updateAssignPreview();
+}
+function selectStaff(el,name){
+  document.querySelectorAll('.staff-card').forEach(c=>c.style.borderColor='');
+  el.style.borderColor='var(--blue)';
+  el.style.background='var(--blue-lt)';
+  setTimeout(()=>el.style.background='',300);
+  selectedStaff=name;
+  updateAssignPreview();
+}
+function updateAssignPreview(){
+  const preview = document.getElementById('assignPreview');
+  const btn = document.getElementById('confirmAssignBtn');
+  if(selectedBin && selectedStaff){
+    preview.innerHTML=`<strong>Ready to assign:</strong><br>🗑️ ${selectedBin.id} (${selectedBin.zone}, ${selectedBin.fill})<br>👷 ${selectedStaff}<br><span style="color:var(--green-dk);font-weight:600">✅ Click confirm to assign.</span>`;
+    btn.disabled=false;btn.style.opacity='1';
+  } else {
+    preview.textContent='👆 Select a bin and a staff member above to preview the assignment.';
+    btn.disabled=true;btn.style.opacity='0.5';
+  }
+}
+document.getElementById('confirmAssignBtn').style.opacity='0.5';
+
+function confirmAssign(){
+  showToast('success','✅ Assigned!',`${selectedBin.id} assigned to ${selectedStaff} successfully.`);
+  selectedBin=null;selectedStaff=null;
+  document.querySelectorAll('.pending-bin').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.staff-card').forEach(c=>{c.style.borderColor='';c.style.background='';});
+  document.getElementById('assignPreview').textContent='👆 Select a bin and a staff member above to preview the assignment.';
+  document.getElementById('confirmAssignBtn').disabled=true;
+  document.getElementById('confirmAssignBtn').style.opacity='0.5';
+}
+
+/* ══════════════════════════════════
+   MISC
+══════════════════════════════════ */
+function resetFilters(){
+  document.querySelectorAll('.filterbar .fsel').forEach(s=>s.selectedIndex=0);
+  showToast('info','↺ Filters Reset','All dashboard filters have been cleared.');
+}
+function filterByKpi(type){
+  goSection('bins', document.querySelector('.nav-item:nth-child(3)'));
+  showToast('info','🔍 Filtered','Bin table filtered by selected KPI.');
+}
+function switchRole(role){
+  const labels={supervisor:'Supervisor',health:'Health Officer',maintenance:'Maintenance',manager:'Manager'};
+  showToast('info',`Role: ${labels[role]}`,'Dashboard view adapted for your role.');
+}
+function filterMapZone(z){ /* Marker filtering handled in production via Leaflet */ }
+
+/* INIT ALL CHARTS */
+setTimeout(()=>{
+  initFillChart();
+  initDonutChart();
+  initSectorChart();
+  initPredFillChart();
+  initWeeklyLine();
+  initResponseChart();
+  initWetChart();
+  initOtcChart();
+},150);
+</script>
+</body>
+</html>
