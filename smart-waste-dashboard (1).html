@@ -64,6 +64,17 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
 /* CONTENT */
 .cnt{flex:1;overflow-y:auto;padding:22px 24px}
+.cnt-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.cnt-layout.filters-hidden{grid-template-columns:minmax(0,1fr)}
+.cnt-main{min-width:0}
+.rflt{position:sticky;top:12px;background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:var(--sh);padding:14px}
+.rflt.hide{display:none}
+.rflt-h{font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.rflt-sub{font-size:12px;color:var(--text3);font-weight:500;margin-bottom:12px}
+.rflt-g{display:flex;flex-direction:column;gap:8px}
+.rflt .sel{width:100%}
+.flt-fab{position:fixed;right:24px;bottom:24px;z-index:1200;display:none}
+.flt-fab.show{display:flex}
 .sec{display:none}
 .sec.on{display:block}
 
@@ -257,6 +268,7 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
 
 /* RESPONSIVE */
 @media(max-width:1100px){.sg{grid-template-columns:repeat(2,1fr)}.g2,.g32{grid-template-columns:1fr}.szg{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:980px){.cnt-layout{grid-template-columns:1fr}.rflt{position:static}}
 @media(max-width:760px){.sb{width:64px;min-width:64px}.sb .logo-name,.sb .logo-sub,.nl span:not(.nl-ico),.sb-foot .usr div,.nav-sec,.nbadge{display:none}.nl{padding:10px;justify-content:center}.sg{grid-template-columns:1fr 1fr}.szg{grid-template-columns:1fr}.top{flex-wrap:wrap;gap:8px}}
 </style>
 </head>
@@ -299,19 +311,9 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
     <div class="ph" id="ph">Dashboard Home</div>
     <div class="lpill"><div class="ldot"></div>Live</div>
     <div class="tright">
-      <select class="sel" onchange="chRole(this.value)">
-        <option value="supervisor">👷 Supervisor</option>
-        <option value="health">🏥 Health Officer</option>
-        <option value="maintenance">🔧 Maintenance</option>
-        <option value="manager">📋 Manager</option>
-      </select>
-      <select class="sel">
-        <option value="all">📍 All Zones</option>
-        <option value="A">Zone A</option><option value="B">Zone B</option>
-        <option value="C">Zone C</option><option value="D">Zone D</option><option value="E">Zone E</option>
-      </select>
       <a href="risk-hotspot-map.html" style="text-decoration:none"><button class="btn btn-o">🗺️ Hotspot Map</button></a>
       <a href="mosquito-risk-panel.html" style="text-decoration:none"><button class="btn btn-o">🦟 Mosquito Panel</button></a>
+      <button class="btn btn-o" id="fltTglBtn" onclick="toggleFilterPane()">Hide Filters</button>
       <button class="btn btn-o" onclick="resetAllFiltersGlobal()">↺ Reset All Filters</button>
       <button class="btn btn-o" onclick="toast2('info','Downloading...','Your report is being prepared.')">⬇ Download</button>
       <button class="btn btn-g" onclick="openAssign()">+ Assign Pickup</button>
@@ -319,6 +321,8 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
   </div>
 
   <div class="cnt">
+    <div class="cnt-layout" id="cntLayout">
+      <div class="cnt-main">
 
     <!-- HOME -->
     <section class="sec on" id="section-overview">
@@ -328,52 +332,6 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
         <div class="chip"><div class="cdot" style="background:var(--green)"></div>48 bins working fine</div>
         <div class="chip"><div class="cdot" style="background:var(--red)"></div>3 need urgent attention</div>
         <div class="chip"><div class="cdot" style="background:var(--amber)"></div>7 getting full soon</div>
-      </div>
-      <div class="ctrl">
-        <div>
-          <div class="ctrl-lbl">Overview Filters & Controls</div>
-          <div style="font-size:12px;color:var(--text3);font-weight:500">Use filters to update KPIs, charts, and zone drill-down</div>
-        </div>
-        <div class="ctrl-g">
-          <select class="sel" id="ovZoneFilter" style="font-size:12px;padding:5px 10px">
-            <option value="all">All Zones</option>
-            <option value="A">Zone A</option>
-            <option value="B">Zone B</option>
-            <option value="C">Zone C</option>
-            <option value="D">Zone D</option>
-            <option value="E">Zone E</option>
-          </select>
-          <select class="sel" id="ovStatusFilter" style="font-size:12px;padding:5px 10px">
-            <option value="all">All Status</option>
-            <option value="full">Overflowing</option>
-            <option value="medium">Getting Full</option>
-            <option value="low">Low Fill</option>
-          </select>
-          <select class="sel" id="ovMoistFilter" style="font-size:12px;padding:5px 10px">
-            <option value="all">All Moisture</option>
-            <option value="Wet">Wet</option>
-            <option value="Moist">Moist</option>
-            <option value="Dry">Dry</option>
-          </select>
-          <select class="sel" id="ovDayFilter" style="font-size:12px;padding:5px 10px">
-            <option value="all">Any Day</option>
-            <option value="weekday">Weekday</option>
-            <option value="weekend">Weekend</option>
-          </select>
-          <select class="sel" id="ovWeekFilter" style="font-size:12px;padding:5px 10px">
-            <option value="this">This Week</option>
-            <option value="last">Last Week</option>
-          </select>
-          <select class="sel" id="ovTimeFilter" style="font-size:12px;padding:5px 10px">
-            <option value="all">Any Time</option>
-            <option value="morning">Morning</option>
-            <option value="afternoon">Afternoon</option>
-            <option value="evening">Evening</option>
-            <option value="night">Night</option>
-          </select>
-          <button class="btn btn-g" style="font-size:12px;padding:6px 10px" onclick="applyOverviewFilters()">Apply</button>
-          <button class="btn btn-o" style="font-size:12px;padding:6px 10px" onclick="resetOverviewFilters()">Reset</button>
-        </div>
       </div>
       <div class="sg">
         <div class="sc"><div class="sc-top"><div class="sc-lbl">Total Bins</div><div class="sc-ico" style="background:var(--green-bg)">♻️</div></div><div class="sc-num" style="color:var(--green)" id="kpiTotalBins">52</div><div class="sc-sub" id="kpiOnlineOffline">48 online · 4 offline</div><div class="spk" id="sp1"></div></div>
@@ -568,6 +526,63 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
       </div>
     </section>
 
+      </div>
+      <aside class="rflt" id="rfltPane">
+        <div class="rflt-h">Filters</div>
+        <div class="rflt-sub">All dashboard filters are pinned here for quick access while scrolling.</div>
+        <div class="rflt-g">
+          <select class="sel" id="roleFilter" onchange="chRole(this.value)">
+            <option value="supervisor">👷 Supervisor</option>
+            <option value="health">🏥 Health Officer</option>
+            <option value="maintenance">🔧 Maintenance</option>
+            <option value="manager">📋 Manager</option>
+          </select>
+          <select class="sel" id="ovZoneFilter">
+            <option value="all">All Zones</option>
+            <option value="A">Zone A</option>
+            <option value="B">Zone B</option>
+            <option value="C">Zone C</option>
+            <option value="D">Zone D</option>
+            <option value="E">Zone E</option>
+          </select>
+          <select class="sel" id="ovStatusFilter">
+            <option value="all">All Status</option>
+            <option value="full">Overflowing</option>
+            <option value="medium">Getting Full</option>
+            <option value="low">Low Fill</option>
+          </select>
+          <select class="sel" id="ovMoistFilter">
+            <option value="all">All Moisture</option>
+            <option value="Wet">Wet</option>
+            <option value="Moist">Moist</option>
+            <option value="Dry">Dry</option>
+          </select>
+          <select class="sel" id="ovDayFilter">
+            <option value="all">Any Day</option>
+            <option value="weekday">Weekday</option>
+            <option value="weekend">Weekend</option>
+          </select>
+          <select class="sel" id="ovWeekFilter">
+            <option value="this">This Week</option>
+            <option value="last">Last Week</option>
+          </select>
+          <select class="sel" id="ovTimeFilter">
+            <option value="all">Any Time</option>
+            <option value="morning">Morning</option>
+            <option value="afternoon">Afternoon</option>
+            <option value="evening">Evening</option>
+            <option value="night">Night</option>
+          </select>
+          <button class="btn btn-g" style="width:100%;justify-content:center" onclick="applyOverviewFilters()">Apply Filters</button>
+          <button class="btn btn-o" style="width:100%;justify-content:center" onclick="resetOverviewFilters()">Reset Overview</button>
+          <button class="btn btn-o" style="width:100%;justify-content:center" onclick="resetAllFiltersGlobal()">Reset All Pages</button>
+          <button class="btn btn-o" style="width:100%;justify-content:center" onclick="toggleFilterPane(false)">Hide Pane</button>
+        </div>
+      </aside>
+    </div>
+
+    <button class="btn btn-g flt-fab" id="fltFab" onclick="toggleFilterPane(true)">Show Filters</button>
+
   </div>
 </main>
 </div>
@@ -614,6 +629,7 @@ const ZONES={A:{avg:60,crit:1,total:3},B:{avg:68,crit:2,total:3},C:{avg:65,crit:
 let overviewFilters={zone:'all',status:'all',moist:'all',day:'all',week:'this',time:'all'};
 const GLOBAL_RESET_KEY='smartbin_global_filter_reset_token';
 const PAGE_RESET_KEY='smartbin_last_reset_dashboard';
+const FILTER_PANE_KEY='smartbin_filter_pane_hidden';
 
 const TITLES={overview:'Dashboard Home',map:'Campus Map',bins:'All Bins',alerts:'Alerts',analytics:'Reports & Analytics',devices:'Sensors & Devices',settings:'Settings'};
 function nav(id,el){
@@ -721,6 +737,39 @@ function applyPendingGlobalReset(){
   if(seen===token)return;
   localStorage.setItem(PAGE_RESET_KEY,token);
   resetOverviewFilters();
+}
+
+function setFilterPaneVisibility(show){
+  const layout=document.getElementById('cntLayout');
+  const pane=document.getElementById('rfltPane');
+  const fab=document.getElementById('fltFab');
+  const btn=document.getElementById('fltTglBtn');
+  if(!layout||!pane||!fab||!btn)return;
+  if(show){
+    layout.classList.remove('filters-hidden');
+    pane.classList.remove('hide');
+    fab.classList.remove('show');
+    btn.textContent='Hide Filters';
+    localStorage.setItem(FILTER_PANE_KEY,'0');
+  }else{
+    layout.classList.add('filters-hidden');
+    pane.classList.add('hide');
+    fab.classList.add('show');
+    btn.textContent='Show Filters';
+    localStorage.setItem(FILTER_PANE_KEY,'1');
+  }
+}
+
+function toggleFilterPane(forceShow){
+  const hidden=document.getElementById('cntLayout')?.classList.contains('filters-hidden');
+  if(forceShow===true){setFilterPaneVisibility(true);return;}
+  if(forceShow===false){setFilterPaneVisibility(false);return;}
+  setFilterPaneVisibility(hidden);
+}
+
+function applySavedPaneState(){
+  const hidden=localStorage.getItem(FILTER_PANE_KEY)==='1';
+  setFilterPaneVisibility(!hidden);
 }
 
 function showZoneDrilldown(zone){
@@ -839,6 +888,7 @@ function simLive(){BINS.forEach(b=>{b.f=Math.min(100,Math.max(0,Math.round(b.f+(
 window.addEventListener('load',()=>{
   renderZones();renderBins(BINS);initOverview();
   applyPendingGlobalReset();
+  applySavedPaneState();
   updateOverviewKpis();
   spk('sp1',[50,51,50,52,51,52,52],'#22c88a');
   spk('sp2',[3,4,3,5,6,7,7],'#ef4444');
