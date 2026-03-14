@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suspicious Activity Monitor — SmartBin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fb;--white:#fff;--border:#e8ecf4;--border2:#d5daea;
+  --text:#1a2035;--text2:#5a6480;--text3:#9aa3bc;
+  --green:#22c88a;  --gbg:#eafaf3;  --gbd:#b6ecd8;  --gdk:#0e9e6a;
+  --amber:#f59e0b;  --abg:#fff8e6;  --abd:#fde68a;  --adk:#b45309;
+  --orange:#f97316; --obg:#fff7ed;  --obd:#fed7aa;  --odk:#c2410c;
+  --red:#ef4444;    --rbg:#fff1f1;  --rbd:#fecaca;  --rdk:#b91c1c;
+  --crit:#991b1b;   --cbg:#fef2f2;  --cbd:#fca5a5;
+  --blue:#3b82f6;   --bbg:#eff6ff;  --bbd:#bfdbfe;  --bdk:#1d4ed8;
+  --purple:#8b5cf6; --pbg:#f5f3ff;  --pbd:#ddd6fe;  --pdk:#6d28d9;
+  --navy:#1e293b;
+  --r:12px;--rlg:16px;
+  --sh:0 1px 4px rgba(30,40,80,.07),0 0 0 1px var(--border);
+  --shh:0 6px 22px rgba(30,40,80,.11),0 0 0 1px var(--border2);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+
+/* ── TOPBAR ── */
+.top{background:var(--white);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:300}
+.logo-row{display:flex;align-items:center;gap:10px}
+.logo-ring{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#ef4444,#991b1b);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.ph{font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--text)}
+.ph-sub{font-size:11px;color:var(--text3);font-weight:500}
+.lpill{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
+.rdot{width:8px;height:8px;border-radius:50%;animation:ppulse 1.2s ease-in-out infinite}
+@keyframes ppulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
+.tright{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sel{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:7px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;outline:none;font-weight:500}
+.sel:hover{border-color:var(--red)}
+.btn{padding:8px 16px;border-radius:10px;border:none;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap}
+.btn-r{background:var(--red);color:#fff}.btn-r:hover{background:#dc2626}
+.btn-o{background:var(--white);color:var(--text2);border:1px solid var(--border)}.btn-o:hover{background:var(--bg);color:var(--text);border-color:var(--border2)}
+.btn-nv{background:var(--navy);color:#fff}.btn-nv:hover{background:#0f172a}
+
+/* ── LAYOUT ── */
+.cnt{padding:22px 24px;max-width:1400px;margin:0 auto}
+.card{background:var(--white);border-radius:var(--rlg);box-shadow:var(--sh);overflow:hidden;margin-bottom:16px}
+.ch{padding:14px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.ct{font-family:'Nunito',sans-serif;font-size:14.5px;font-weight:800;color:var(--text)}
+.cd{font-size:12px;color:var(--text3);font-weight:500;margin-top:2px}
+.cb{padding:16px 20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.hero-split{display:grid;grid-template-columns:1fr 380px;gap:16px;margin-bottom:16px}
+.cbox{position:relative}
+
+/* ── STAT CARDS ── */
+.sc{background:var(--white);border-radius:var(--rlg);padding:16px 18px;box-shadow:var(--sh);transition:all .2s}
+.sc:hover{box-shadow:var(--shh);transform:translateY(-1px)}
+.sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sc-lbl{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.sc-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.sc-num{font-family:'Nunito',sans-serif;font-size:32px;font-weight:900;line-height:1;margin-bottom:4px}
+.sc-sub{font-size:12px;color:var(--text3);font-weight:500}
+
+/* ── LEAFLET MAP ── */
+#susMap{width:100%;height:480px;z-index:1}
+.leaflet-popup-content-wrapper{border-radius:14px;box-shadow:var(--shh);font-family:'Plus Jakarta Sans',sans-serif}
+.leaflet-popup-content{font-size:13px;line-height:1.6;margin:13px 15px}
+.pu-id{font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;margin-bottom:5px}
+.pu-row{display:flex;justify-content:space-between;gap:14px;font-size:12.5px;border-top:1px solid var(--border);padding:4px 0;margin-top:4px}
+.pu-k{color:var(--text3);font-weight:600}.pu-v{font-weight:700;color:var(--text)}
+.pu-btn{margin-top:10px;background:var(--red);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;width:100%;font-family:'Plus Jakarta Sans',sans-serif}
+.pu-btn:hover{background:#dc2626}
+
+/* Custom marker */
+.sbin-marker{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;transition:transform .15s;position:relative}
+.sbin-marker:hover{transform:scale(1.22)}
+.sm-green{background:#22c88a}
+.sm-yellow{background:#f59e0b}
+.sm-orange{background:#f97316}
+.sm-red{background:#ef4444}
+.sm-darkred{background:#991b1b;animation:mring 1.4s ease-in-out infinite}
+@keyframes mring{0%,100%{box-shadow:0 0 0 0 rgba(153,27,27,.5),0 2px 8px rgba(0,0,0,.18)}60%{box-shadow:0 0 0 12px rgba(153,27,27,0),0 2px 8px rgba(0,0,0,.18)}}
+.sm-icon-overlay{position:absolute;top:-8px;right:-8px;font-size:13px;background:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+
+/* ── MAP LEGEND ── */
+.map-leg{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.mleg-item{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--text2)}
+.mleg-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.8)}
+.mleg-dot.pulse{animation:mring 1.5s ease-in-out infinite}
+
+/* ── FILTER ROW ── */
+.filter-bar{padding:10px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg)}
+.flbl{font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.07em}
+.ftag{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text2);transition:all .15s}
+.ftag:hover{border-color:var(--border2)}
+.ftag.on{border-color:currentColor}
+.fdot{width:9px;height:9px;border-radius:50%}
+
+/* ── RISK BADGES ── */
+.rbadge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.rb-safe{background:var(--gbg);color:var(--gdk);border:1px solid var(--gbd)}
+.rb-low{background:var(--abg);color:var(--adk);border:1px solid var(--abd)}
+.rb-med{background:var(--obg);color:var(--odk);border:1px solid var(--obd)}
+.rb-high{background:var(--rbg);color:var(--rdk);border:1px solid var(--rbd)}
+.rb-crit{background:var(--cbg);color:var(--crit);border:1px solid var(--cbd);animation:badge-glow 2s ease-in-out infinite}
+@keyframes badge-glow{0%,100%{box-shadow:0 0 0 0 rgba(153,27,27,.3)}50%{box-shadow:0 0 0 5px rgba(153,27,27,0)}}
+
+/* ── ALERT STREAM ── */
+.stream{display:flex;flex-direction:column;gap:7px;max-height:460px;overflow-y:auto;padding-right:2px}
+.stream-item{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid transparent;cursor:default;transition:border-color .15s}
+.stream-item:hover{border-color:var(--border2)}
+.si-crit{background:var(--cbg);border-color:var(--cbd)}
+.si-high{background:var(--rbg);border-color:var(--rbd)}
+.si-med{background:var(--obg);border-color:var(--obd)}
+.si-low{background:var(--abg);border-color:var(--abd)}
+.si-safe{background:var(--gbg);border-color:var(--gbd)}
+.si-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.si-crit .si-dot,.si-high .si-dot{background:var(--crit);animation:ppulse 1.3s ease-in-out infinite}
+.si-med .si-dot{background:var(--orange)}
+.si-low .si-dot{background:var(--amber)}
+.si-safe .si-dot{background:var(--green)}
+.si-time{font-size:10.5px;font-family:'Nunito',sans-serif;font-weight:700;color:var(--text3);white-space:nowrap;margin-top:1px}
+.si-title{font-size:12.5px;font-weight:700}
+.si-crit .si-title,.si-high .si-title{color:var(--crit)}
+.si-med .si-title{color:var(--odk)}
+.si-low .si-title{color:var(--adk)}
+.si-desc{font-size:11.5px;color:var(--text2);margin-top:2px}
+
+/* ── PATROL TABLE ── */
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{border-bottom:2px solid var(--border)}
+th{padding:10px 14px;text-align:left;color:var(--text3);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text2)}
+tr:last-child td{border-bottom:none}
+tbody tr{cursor:pointer;transition:background .12s}
+tbody tr:hover td{background:var(--bg);color:var(--text)}
+.action-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.at-patrol{background:var(--rbg);color:var(--rdk)}
+.at-observe{background:var(--abg);color:var(--adk)}
+.at-animal{background:var(--obg);color:var(--odk)}
+.at-maint{background:var(--bbg);color:var(--bdk)}
+.at-ok{background:var(--gbg);color:var(--gdk)}
+
+/* ── TOP BINS RANK ── */
+.rank-list{display:flex;flex-direction:column;gap:9px}
+.rank-item{display:flex;align-items:stretch;border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--sh);cursor:pointer;transition:all .2s}
+.rank-item:hover{box-shadow:var(--shh);transform:translateX(3px)}
+.rank-num{width:44px;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;color:#fff;flex-shrink:0}
+.rank-body{flex:1;padding:10px 14px;background:var(--white)}
+.rank-id{font-family:'Nunito',sans-serif;font-size:14px;font-weight:800}
+.rank-bar-bg{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:6px 0 2px}
+.rank-bar-fill{height:100%;border-radius:3px;transition:width .9s ease}
+
+/* ── HEATMAP ── */
+.hm-outer{overflow-x:auto}
+.hm-grid{display:grid;gap:3px}
+.hm-cell{height:30px;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:transform .1s}
+.hm-cell:hover{transform:scale(1.06);z-index:5}
+.hm-lbl{background:transparent;color:var(--text2);font-size:12px;font-weight:700;justify-content:flex-end;padding-right:8px}
+.hm-hdr{background:transparent;color:var(--text3);font-size:11px;font-weight:700}
+.hm-tt{position:absolute;bottom:calc(100%+5px);left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:5px 9px;border-radius:7px;font-size:11px;font-weight:600;white-space:nowrap;display:none;pointer-events:none;z-index:20}
+.hm-tt::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--navy)}
+.hm-cell:hover .hm-tt{display:block}
+
+/* ── CORRELATION VIEW ── */
+.corr-grid{display:flex;flex-direction:column;gap:8px}
+.corr-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg)}
+.corr-id{font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;width:60px;color:var(--text)}
+.corr-bars{flex:1;display:flex;flex-direction:column;gap:4px}
+.corr-bar-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)}
+.corr-bar-bg{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.corr-bar-fill{height:100%;border-radius:3px}
+.corr-badge{flex-shrink:0}
+
+/* ── MODAL ── */
+.ov{position:fixed;inset:0;background:rgba(20,30,60,.4);backdrop-filter:blur(5px);z-index:1000;display:none;align-items:center;justify-content:center}
+.ov.open{display:flex}
+.mbox{background:var(--white);border-radius:20px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(20,30,80,.2);animation:popIn .2s ease}
+@keyframes popIn{from{transform:scale(.93) translateY(14px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.mhd{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.mt{font-family:'Nunito',sans-serif;font-weight:800;font-size:16px}
+.mcls{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.mcls:hover{background:var(--rbg);color:var(--red);border-color:var(--rbd)}
+.mbody{padding:20px 22px}
+.dl{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13.5px}
+.dl:last-of-type{border-bottom:none}
+.dk{color:var(--text3);font-weight:600}.dv{font-weight:700;color:var(--text)}
+
+/* ── TOAST ── */
+.toa{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--white);border-radius:14px;padding:13px 16px;min-width:290px;max-width:360px;display:flex;align-items:flex-start;gap:11px;animation:sIn .3s ease;box-shadow:0 8px 30px rgba(20,30,80,.12),0 0 0 1px var(--border)}
+@keyframes sIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+.tttl{font-size:13px;font-weight:700;color:var(--text)}
+.tmsg{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* Responsive */
+@media(max-width:1100px){.hero-split{grid-template-columns:1fr}.g2,.g3{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.g4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="top">
+  <div class="logo-row">
+    <div class="logo-ring">🔍</div>
+    <div>
+      <div class="ph">Suspicious Activity Monitor</div>
+      <div class="ph-sub">PIR Motion Intelligence · SLIIT Campus SmartBin</div>
+    </div>
+  </div>
+  <div class="lpill" style="background:var(--cbg);border:1px solid var(--cbd);color:var(--crit)">
+    <div class="rdot" style="background:var(--crit)"></div>2 Active Alerts
+  </div>
+  <div class="tright">
+    <select class="sel" id="zoneSel" onchange="filterZone(this.value)">
+      <option value="all">📍 All Zones</option>
+      <option value="canteen">Main Canteen</option>
+      <option value="engineering">Engineering Block</option>
+      <option value="business">Business Faculty</option>
+      <option value="birdnest">Bird Nest Area</option>
+      <option value="newbldg">New Building</option>
+      <option value="hostel">Hostel Side</option>
+    </select>
+    <select class="sel" id="timeSel" onchange="updateAllCharts(this.value)">
+      <option value="24h">Last 24 Hours</option>
+      <option value="7d">Last 7 Days</option>
+    </select>
+    <button class="btn btn-r" onclick="dispatchPatrol()">🚨 Dispatch Patrol</button>
+    <a href="smart-waste-dashboard.html" class="btn btn-o">← Dashboard</a>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="cnt">
+
+  <!-- STAT CARDS -->
+  <div class="g4">
+    <div class="sc">
+      <div class="sc-top"><div class="sc-lbl">Total Motion Today</div><div class="sc-ico" style="background:var(--bbg)">👁️</div></div>
+      <div class="sc-num" style="color:var(--blue)" id="sTotalMotion">184</div>
+      <div class="sc-sub">Across all 52 bins</div>
+    </div>
+    <div class="sc">
+      <div class="sc-top"><div class="sc-lbl">Suspicious Events</div><div class="sc-ico" style="background:var(--rbg)">⚠️</div></div>
+      <div class="sc-num" style="color:var(--red)" id="sSuspEvents">14</div>
+      <div class="sc-sub" style="color:var(--rdk);font-weight:600">↑ +3 in last hour</div>
+    </div>
+    <div class="sc">
+      <div class="sc-top"><div class="sc-lbl">After-Hours Alerts</div><div class="sc-ico" style="background:var(--cbg)">🌙</div></div>
+      <div class="sc-num" style="color:var(--crit)" id="sNightAlerts">6</div>
+      <div class="sc-sub">After 10 PM tonight</div>
+    </div>
+    <div class="sc">
+      <div class="sc-top"><div class="sc-lbl">Unresolved Alerts</div><div class="sc-ico" style="background:var(--obg)">🔔</div></div>
+      <div class="sc-num" style="color:var(--orange)" id="sUnresolved">4</div>
+      <div class="sc-sub">Require patrol action</div>
+    </div>
+  </div>
+
+  <!-- HERO: MAP + ALERT STREAM -->
+  <div class="hero-split">
+
+    <!-- LEAFLET MAP -->
+    <div class="card" style="overflow:visible">
+      <div class="ch">
+        <div>
+          <div class="ct">🗺️ Suspicious Activity Hotspot Map</div>
+          <div class="cd">Live PIR motion status — tap any bin for details</div>
+        </div>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-o" style="font-size:12px;padding:5px 10px" onclick="mapFitAll()">Fit All</button>
+          <button class="btn btn-o" style="font-size:12px;padding:5px 10px" onclick="toggleNightMode()">🌙 Night</button>
+        </div>
+      </div>
+
+      <!-- FILTER CHIPS -->
+      <div class="filter-bar">
+        <span class="flbl">Show:</span>
+        <div class="ftag on" onclick="toggleFilter('darkred',this)" style="color:var(--crit)"><div class="fdot" style="background:var(--crit)"></div><span>Critical (Pulsing)</span></div>
+        <div class="ftag on" onclick="toggleFilter('red',this)" style="color:var(--red)"><div class="fdot" style="background:var(--red)"></div><span>Suspicious</span></div>
+        <div class="ftag on" onclick="toggleFilter('orange',this)" style="color:var(--orange)"><div class="fdot" style="background:var(--orange)"></div><span>Repeated Motion</span></div>
+        <div class="ftag on" onclick="toggleFilter('yellow',this)" style="color:var(--amber)"><div class="fdot" style="background:var(--amber)"></div><span>Few Events</span></div>
+        <div class="ftag on" onclick="toggleFilter('green',this)" style="color:var(--green)"><div class="fdot" style="background:var(--green)"></div><span>Normal</span></div>
+      </div>
+
+      <div id="susMap"></div>
+      <div class="map-leg">
+        <div class="mleg-item"><div class="mleg-dot" style="background:#22c88a"></div>Normal — No concern</div>
+        <div class="mleg-item"><div class="mleg-dot" style="background:#f59e0b"></div>Few events</div>
+        <div class="mleg-item"><div class="mleg-dot" style="background:#f97316"></div>Repeated motion</div>
+        <div class="mleg-item"><div class="mleg-dot" style="background:#ef4444"></div>Suspicious detected</div>
+        <div class="mleg-item"><div class="mleg-dot pulse" style="background:#991b1b"></div>Critical — after-hours</div>
+        <div style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap">
+          <div class="mleg-item">🐕 Animal disturbance</div>
+          <div class="mleg-item">🔔 Active alert</div>
+          <div class="mleg-item">🔧 Maintenance needed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERT STREAM (G) -->
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">G. Live Alert Stream</div><div class="cd">Real-time motion event feed</div></div>
+        <button class="btn btn-o" style="font-size:12px;padding:5px 10px" onclick="clearAlerts()">Clear</button>
+      </div>
+      <div class="cb" style="padding:12px 14px">
+        <div class="stream" id="alertStream"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1: A + B -->
+  <div class="g2">
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">A. Total Motion Events Over Time</div><div class="cd">All PIR triggers — normal + suspicious combined</div></div>
+        <select class="sel" style="font-size:11px;padding:4px 8px" onchange="updateMotionChart(this.value)">
+          <option value="24h">24 Hours</option><option value="7d">7 Days</option>
+        </select>
+      </div>
+      <div class="cb"><div class="cbox" style="height:210px"><canvas id="motionTrendChart"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">B. Suspicious Events Only</div><div class="cd">After-hours · Repeated triggers · No fill change</div></div>
+        <select class="sel" style="font-size:11px;padding:4px 8px" onchange="updateSuspChart(this.value)">
+          <option value="24h">24 Hours</option><option value="7d">7 Days</option>
+        </select>
+      </div>
+      <div class="cb"><div class="cbox" style="height:210px"><canvas id="suspTrendChart"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2: C ZONE BAR + F DAY/NIGHT -->
+  <div class="g2">
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">C. Zone Comparison</div><div class="cd">Which area has the most suspicious activity?</div></div>
+        <select class="sel" style="font-size:11px;padding:4px 8px" onchange="updateZoneChart(this.value)">
+          <option value="total">Total Motion</option>
+          <option value="suspicious">Suspicious Events</option>
+          <option value="night">Night-time Motion</option>
+          <option value="repeated">Repeated Alerts</option>
+        </select>
+      </div>
+      <div class="cb"><div class="cbox" style="height:210px"><canvas id="zoneChart"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">F. Day vs Night Motion</div><div class="cd">Security focuses on night — maintenance on day patterns</div></div>
+      </div>
+      <div class="cb">
+        <div class="cbox" style="height:170px"><canvas id="dayNightChart"></canvas></div>
+        <div style="display:flex;gap:14px;justify-content:center;margin-top:10px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:12px;height:12px;border-radius:3px;background:#f59e0b;display:inline-block"></span>Day (6am–10pm)</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:12px;height:12px;border-radius:3px;background:#991b1b;display:inline-block"></span>Night (10pm–6am)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- D. HEATMAP + E. REPEATED TRIGGERS -->
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div><div class="ct">D. Time-of-Day Heatmap</div><div class="cd">When and where suspicious activity clusters — rows = zones, columns = time blocks</div></div></div>
+      <div class="cb">
+        <div class="hm-outer" id="hmBox"></div>
+        <div style="display:flex;align-items:center;gap:7px;margin-top:10px;font-size:11.5px;font-weight:600;color:var(--text3)">
+          <span>Quiet</span><div id="hmScale" style="display:flex;gap:2px"></div><span>High activity</span>
+        </div>
+        <div style="margin-top:10px;padding:9px 13px;background:var(--cbg);border-radius:9px;border:1px solid var(--cbd);font-size:12px;color:var(--crit);font-weight:600">
+          💡 Insight: <strong>Bird Nest Area & Main Canteen</strong> show the highest suspicious activity <strong>late evening (9pm–12am)</strong>. Consider night patrol.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div><div class="ct">E. Repeated Trigger Frequency</div><div class="cd">Same bin triggered multiple times in short window — likely animal or tampering</div></div></div>
+      <div class="cb"><div class="cbox" style="height:210px"><canvas id="repeatChart"></canvas></div>
+        <div style="margin-top:10px;padding:9px 13px;background:var(--obg);border-radius:9px;border:1px solid var(--obd);font-size:12px;color:var(--odk);font-weight:600">
+          🐕 BIN-03 and BIN-07 show dog-like disturbance patterns (12+ triggers in under 20 min).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- H. TOP RISK BINS + I. PATROL TABLE -->
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div><div class="ct">H. Top 5 Highest Risk Bins</div><div class="cd">Ranked by suspicious score — click to inspect</div></div></div>
+      <div class="cb" style="padding:14px 16px"><div class="rank-list" id="rankList"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div><div class="ct">I. Patrol Priority Table</div><div class="cd">Actionable list for security guard on duty</div></div>
+        <button class="btn btn-nv" style="font-size:12px;padding:5px 10px" onclick="exportPatrol()">⬇ Export</button>
+      </div>
+      <div class="tscroll">
+        <table>
+          <thead><tr><th>Bin ID</th><th>Location</th><th>Last Motion</th><th>Alerts Today</th><th>Risk Level</th><th>Suggested Action</th></tr></thead>
+          <tbody id="patrolTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- J. DURATION + K. MOTION+FILL CORRELATION + L. COMBINED RISK -->
+  <div class="g3">
+    <div class="card">
+      <div class="ch"><div><div class="ct">J. Motion Duration per Bin</div><div class="cd">Longer = someone lingering or animal</div></div></div>
+      <div class="cb"><div class="cbox" style="height:200px"><canvas id="durationChart"></canvas></div></div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div><div class="ct">K. Motion vs Fill Level</div><div class="cd">Motion + no fill change = suspicious</div></div></div>
+      <div class="cb" style="padding:12px 14px">
+        <div class="corr-grid" id="corrGrid"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div><div class="ct">L. Combined Risk Score</div><div class="cd">Motion + Moisture + Context</div></div></div>
+      <div class="cb" style="padding:12px 14px;display:flex;flex-direction:column;gap:8px" id="combinedRisk"></div>
+    </div>
+  </div>
+
+</div><!-- /cnt -->
+
+<!-- BIN DETAIL MODAL -->
+<div class="ov" id="binModal" onclick="closeOv(event)">
+  <div class="mbox">
+    <div class="mhd"><div class="mt" id="modTitle">Bin Activity Detail</div><button class="mcls" onclick="document.getElementById('binModal').classList.remove('open')">×</button></div>
+    <div class="mbody" id="modBody"></div>
+  </div>
+</div>
+
+<div class="toa" id="toaBox"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const BINS = [
+  {id:'B03', zone:'canteen',     name:'Main Canteen',      lat:6.9155, lng:79.9752, risk:'darkred', motionToday:28, suspicious:8,  nightAlerts:4, repeated:12, fillChange:2,  moisture:'Wet',  pirMin:18, alerts:5, lastMotion:'02:14 AM', icon:'alert'},
+  {id:'B07', zone:'birdnest',    name:'Bird Nest Area',    lat:6.9162, lng:79.9741, risk:'darkred', motionToday:24, suspicious:6,  nightAlerts:3, repeated:9,  fillChange:1,  moisture:'Moist',pirMin:15, alerts:4, lastMotion:'01:48 AM', icon:'alert'},
+  {id:'A04', zone:'engineering', name:'Engineering Block',  lat:6.9170, lng:79.9760, risk:'red',     motionToday:19, suspicious:4,  nightAlerts:1, repeated:5,  fillChange:8,  moisture:'Dry',  pirMin:8,  alerts:3, lastMotion:'09:30 PM', icon:'dog'},
+  {id:'C02', zone:'business',    name:'Business Faculty',  lat:6.9148, lng:79.9768, risk:'red',     motionToday:15, suspicious:3,  nightAlerts:1, repeated:4,  fillChange:5,  moisture:'Dry',  pirMin:6,  alerts:2, lastMotion:'10:10 PM', icon:'wrench'},
+  {id:'E05', zone:'newbldg',     name:'New Building',      lat:6.9138, lng:79.9745, risk:'orange',  motionToday:12, suspicious:2,  nightAlerts:0, repeated:3,  fillChange:10, moisture:'Dry',  pirMin:5,  alerts:1, lastMotion:'08:45 PM', icon:''},
+  {id:'D08', zone:'hostel',      name:'Hostel Side',       lat:6.9128, lng:79.9762, risk:'orange',  motionToday:10, suspicious:1,  nightAlerts:0, repeated:2,  fillChange:7,  moisture:'Moist',pirMin:4,  alerts:1, lastMotion:'11:20 PM', icon:'dog'},
+  {id:'A01', zone:'engineering', name:'Engineering Block',  lat:6.9173, lng:79.9755, risk:'yellow',  motionToday:7,  suspicious:0,  nightAlerts:0, repeated:1,  fillChange:12, moisture:'Dry',  pirMin:3,  alerts:0, lastMotion:'06:00 PM', icon:''},
+  {id:'B11', zone:'canteen',     name:'Main Canteen',      lat:6.9151, lng:79.9748, risk:'yellow',  motionToday:6,  suspicious:0,  nightAlerts:0, repeated:1,  fillChange:9,  moisture:'Dry',  pirMin:2,  alerts:0, lastMotion:'05:30 PM', icon:''},
+  {id:'C06', zone:'business',    name:'Business Faculty',  lat:6.9144, lng:79.9771, risk:'green',   motionToday:3,  suspicious:0,  nightAlerts:0, repeated:0,  fillChange:15, moisture:'Dry',  pirMin:1,  alerts:0, lastMotion:'03:20 PM', icon:''},
+  {id:'D02', zone:'birdnest',    name:'Bird Nest Area',    lat:6.9165, lng:79.9737, risk:'green',   motionToday:2,  suspicious:0,  nightAlerts:0, repeated:0,  fillChange:11, moisture:'Dry',  pirMin:1,  alerts:0, lastMotion:'02:10 PM', icon:''},
+];
+
+const RISK_COLORS = {green:'#22c88a', yellow:'#f59e0b', orange:'#f97316', red:'#ef4444', darkred:'#991b1b'};
+const RISK_LABELS = {green:'Normal', yellow:'Few Events', orange:'Repeated Motion', red:'Suspicious', darkred:'Critical'};
+const RISK_CLS    = {green:'rb-safe', yellow:'rb-low', orange:'rb-med', red:'rb-high', darkred:'rb-crit'};
+const ICON_EMOJI  = {dog:'🐕', alert:'🔔', wrench:'🔧', '':''};
+
+const activeFilters = {darkred:true, red:true, orange:true, yellow:true, green:true};
+
+// ═══════════════════════════════════════════
+// LEAFLET MAP
+// ═══════════════════════════════════════════
+let leafMap, markerMap = {};
+
+function makeIcon(bin) {
+  const cls = `sm-${bin.risk === 'darkred' ? 'darkred' : bin.risk === 'red' ? 'red' : bin.risk === 'orange' ? 'orange' : bin.risk === 'yellow' ? 'yellow' : 'green'}`;
+  const emoji = bin.risk === 'darkred' ? '⚠️' : bin.risk === 'red' ? '🔴' : bin.risk === 'orange' ? '🟠' : bin.risk === 'yellow' ? '⚡' : '✅';
+  const overlay = bin.icon ? `<div class="sm-icon-overlay">${ICON_EMOJI[bin.icon]}</div>` : '';
+  return L.divIcon({
+    className:'',
+    html:`<div class="sbin-marker ${cls}">${emoji}${overlay}</div>`,
+    iconSize:[36,36], iconAnchor:[18,18], popupAnchor:[0,-22]
+  });
+}
+
+function makePopup(b) {
+  const col = RISK_COLORS[b.risk];
+  return `<div style="min-width:210px">
+    <div class="pu-id">BIN-${b.id} — ${b.name}</div>
+    <div style="display:inline-block;background:${col}22;color:${col};border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;margin-bottom:6px;border:1px solid ${col}44">${RISK_LABELS[b.risk]}</div>
+    <div class="pu-row"><span class="pu-k">Motion today</span><span class="pu-v">${b.motionToday} events</span></div>
+    <div class="pu-row"><span class="pu-k">Suspicious</span><span class="pu-v" style="color:${col}">${b.suspicious} events</span></div>
+    <div class="pu-row"><span class="pu-k">Night alerts</span><span class="pu-v">${b.nightAlerts}</span></div>
+    <div class="pu-row"><span class="pu-k">Last motion</span><span class="pu-v">${b.lastMotion}</span></div>
+    <div class="pu-row"><span class="pu-k">Fill change</span><span class="pu-v">${b.fillChange > 5 ? b.fillChange+'% (normal)' : b.fillChange+'% ⚠️ low'}</span></div>
+    <button class="pu-btn" onclick="showBinModal('${b.id}')">📋 Full Details</button>
+  </div>`;
+}
+
+function initMap() {
+  leafMap = L.map('susMap', {zoomControl:true, scrollWheelZoom:true}).setView([6.9148, 79.9752], 16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap', maxZoom:19}).addTo(leafMap);
+  BINS.forEach(b => {
+    const m = L.marker([b.lat, b.lng], {icon: makeIcon(b)})
+      .bindPopup(makePopup(b), {maxWidth:260})
+      .addTo(leafMap);
+    markerMap[b.id] = {marker:m, bin:b};
+  });
+}
+
+function mapFitAll() {
+  const pts = BINS.filter(b => activeFilters[b.risk]).map(b => [b.lat, b.lng]);
+  if (pts.length) leafMap.fitBounds(L.latLngBounds(pts), {padding:[40,40]});
+}
+
+let nightMode = false;
+function toggleNightMode() {
+  nightMode = !nightMode;
+  document.getElementById('susMap').style.filter = nightMode ? 'invert(1) hue-rotate(200deg) brightness(0.85)' : '';
+  toast('info', nightMode ? '🌙 Night Mode On' : '☀️ Day Mode', 'Map display updated.');
+}
+
+function filterZone(zone) {
+  BINS.forEach(b => {
+    const {marker} = markerMap[b.id];
+    const show = (zone === 'all' || b.zone === zone) && activeFilters[b.risk];
+    if (show) marker.addTo(leafMap); else leafMap.removeLayer(marker);
+  });
+}
+
+function toggleFilter(type, el) {
+  activeFilters[type] = !activeFilters[type];
+  el.classList.toggle('on');
+  filterZone(document.getElementById('zoneSel').value);
+}
+
+function showBinModal(id) {
+  const b = BINS.find(x => x.id === id); if (!b) return;
+  const col = RISK_COLORS[b.risk];
+  const susp = b.fillChange <= 3 ? '⚠️ Suspicious — no fill increase despite motion' : '✅ Likely normal usage';
+  const combined = (b.suspicious >= 5 && b.moisture !== 'Dry') ? '🔴 Critical combined risk' : b.suspicious >= 3 ? '🟠 High combined risk' : '🟡 Moderate risk';
+  document.getElementById('modTitle').textContent = `BIN-${b.id} — ${b.name}`;
+  document.getElementById('modBody').innerHTML = `
+    <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <span class="rbadge ${RISK_CLS[b.risk]}">${RISK_LABELS[b.risk]}</span>
+      ${b.icon ? `<span class="rbadge rb-med">${ICON_EMOJI[b.icon]} ${b.icon==='dog'?'Animal disturbance':b.icon==='wrench'?'Needs maintenance':'Active alert'}</span>` : ''}
+    </div>
+    <div class="dl"><span class="dk">Location / Zone</span><span class="dv">${b.name}</span></div>
+    <div class="dl"><span class="dk">Motion events today</span><span class="dv">${b.motionToday}</span></div>
+    <div class="dl"><span class="dk">Suspicious events</span><span class="dv" style="color:${col}">${b.suspicious}</span></div>
+    <div class="dl"><span class="dk">After-hours alerts (10pm+)</span><span class="dv">${b.nightAlerts}</span></div>
+    <div class="dl"><span class="dk">Repeated triggers in short window</span><span class="dv">${b.repeated} times</span></div>
+    <div class="dl"><span class="dk">Longest trigger window</span><span class="dv">${b.pirMin} minutes</span></div>
+    <div class="dl"><span class="dk">Fill level change</span><span class="dv">${b.fillChange}% — ${susp}</span></div>
+    <div class="dl"><span class="dk">Moisture</span><span class="dv">${b.moisture}</span></div>
+    <div class="dl"><span class="dk">Last motion detected</span><span class="dv">${b.lastMotion}</span></div>
+    <div class="dl"><span class="dk">Combined risk assessment</span><span class="dv">${combined}</span></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-r" style="flex:1;justify-content:center" onclick="dispatchTobin('${b.id}');document.getElementById('binModal').classList.remove('open')">🚨 Dispatch Patrol</button>
+      <button class="btn btn-o" onclick="document.getElementById('binModal').classList.remove('open')">Close</button>
+    </div>`;
+  document.getElementById('binModal').classList.add('open');
+}
+
+function closeOv(e) { if (e.target.classList.contains('ov')) document.querySelectorAll('.ov').forEach(o => o.classList.remove('open')); }
+
+// ═══════════════════════════════════════════
+// ALERT STREAM (G)
+// ═══════════════════════════════════════════
+const STREAM_EVENTS = [
+  {time:'02:14 AM', bin:'B03', loc:'Main Canteen',     event:'Repeated motion',      risk:'crit', desc:'12 triggers in 18 min — possible tampering or animal'},
+  {time:'02:11 AM', bin:'B03', loc:'Main Canteen',     event:'Motion detected',       risk:'high', desc:'After-hours PIR trigger — restricted zone'},
+  {time:'01:48 AM', bin:'B07', loc:'Bird Nest Area',   event:'Motion detected',       risk:'crit', desc:'9 repeated triggers in 15 min — alert escalated'},
+  {time:'01:30 AM', bin:'B07', loc:'Bird Nest Area',   event:'Alert escalated',       risk:'crit', desc:'Repeated abnormal motion — no fill change detected'},
+  {time:'10:10 PM', bin:'C02', loc:'Business Faculty', event:'Suspicious motion',     risk:'high', desc:'Motion with no fill level increase — possible dog'},
+  {time:'09:30 PM', bin:'A04', loc:'Engineering Block','event':'Motion detected',      risk:'high', desc:'Single trigger — unusual hour for this location'},
+  {time:'11:20 PM', bin:'D08', loc:'Hostel Side',      event:'Motion detected',       risk:'med',  desc:'Hostel area — possibly student movement'},
+  {time:'08:45 PM', bin:'E05', loc:'New Building',     event:'Repeated motion (×3)',  risk:'med',  desc:'3 triggers in 10 min — watch only'},
+  {time:'06:00 PM', bin:'A01', loc:'Engineering Block','event':'Normal motion',        risk:'low',  desc:'End of day — expected student activity'},
+  {time:'05:30 PM', bin:'B11', loc:'Main Canteen',     event:'Normal motion',         risk:'safe', desc:'Canteen closing time — expected activity'},
+];
+
+function renderStream(events) {
+  const cls = {crit:'si-crit', high:'si-high', med:'si-med', low:'si-low', safe:'si-safe'};
+  const ico = {crit:'🚨', high:'⚠️', med:'🟠', low:'💛', safe:'✅'};
+  document.getElementById('alertStream').innerHTML = events.map(e => `
+    <div class="stream-item ${cls[e.risk]}">
+      <div class="si-dot"></div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+          <span class="si-title">${ico[e.risk]} BIN-${e.bin} — ${e.event}</span>
+        </div>
+        <div class="si-desc">${e.desc}</div>
+        <div class="si-time">${e.time} · ${e.loc}</div>
+      </div>
+    </div>`).join('');
+}
+
+function clearAlerts() {
+  document.getElementById('alertStream').innerHTML = `<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;font-weight:600">No active alerts — all clear ✅</div>`;
+  toast('success', 'Alerts Cleared', 'Alert stream has been acknowledged.');
+}
+
+// ═══════════════════════════════════════════
+// CHART BASE
+// ═══════════════════════════════════════════
+const bOpts = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false}, tooltip:{backgroundColor:'#fff', titleColor:'#1a2035', bodyColor:'#5a6480', borderColor:'#e8ecf4', borderWidth:1, padding:10, cornerRadius:8}},
+  scales:{x:{grid:{color:'rgba(232,236,244,.8)'}, ticks:{color:'#9aa3bc', font:{size:11}}}, y:{grid:{color:'rgba(232,236,244,.8)'}, ticks:{color:'#9aa3bc', font:{size:11}}}}
+};
+
+const MOTION_DATA = {
+  '24h':{
+    labels:['12am','2am','4am','6am','8am','10am','12pm','2pm','4pm','6pm','8pm','10pm'],
+    total:[2,12,8,1,4,12,18,22,20,16,14,18],
+    suspicious:[2,9,6,0,0,0,1,1,1,1,3,8]
+  },
+  '7d':{
+    labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    total:[42,58,38,65,72,85,60],
+    suspicious:[4,7,3,9,8,14,10]
+  }
+};
+
+const ZONE_DATA = {
+  total:      [65,42,38,28,24,20],
+  suspicious: [14,9,5,3,2,1],
+  night:      [7,4,3,1,1,0],
+  repeated:   [21,11,6,4,3,2]
+};
+
+const ZONE_LABELS = ['Main Canteen','Bird Nest Area','Engineering Block','Business Faculty','New Building','Hostel Side'];
+const ZONE_COLS   = ['#991b1b','#ef4444','#f97316','#f59e0b','#22c88a','#22c88a'];
+
+let motionCI, suspCI, zoneCI, dayNightCI, repeatCI, durationCI;
+
+// A. MOTION TREND
+function buildMotionChart(range) {
+  const d = MOTION_DATA[range || '24h'];
+  const ctx = document.getElementById('motionTrendChart');
+  if (motionCI) motionCI.destroy();
+  motionCI = new Chart(ctx, {
+    type:'line',
+    data:{labels:d.labels, datasets:[
+      {label:'Total motion', data:d.total, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.07)', fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#3b82f6', borderWidth:2.5},
+    ]},
+    options:{...bOpts, scales:{...bOpts.scales, y:{...bOpts.scales.y, beginAtZero:true}}}
+  });
+}
+
+// B. SUSPICIOUS TREND
+function buildSuspChart(range) {
+  const d = MOTION_DATA[range || '24h'];
+  const ctx = document.getElementById('suspTrendChart');
+  if (suspCI) suspCI.destroy();
+  suspCI = new Chart(ctx, {
+    type:'line',
+    data:{labels:d.labels, datasets:[
+      {label:'Suspicious events', data:d.suspicious, borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.08)', fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#ef4444', borderWidth:2.5},
+      {label:'Total motion', data:d.total, borderColor:'#cbd5e1', backgroundColor:'transparent', fill:false, tension:.4, pointRadius:2, borderWidth:1.5, borderDash:[4,3]},
+    ]},
+    options:{...bOpts, plugins:{...bOpts.plugins, legend:{display:true, labels:{color:'#5a6480', boxWidth:10, font:{size:11}}}}, scales:{...bOpts.scales, y:{...bOpts.scales.y, beginAtZero:true}}}
+  });
+}
+
+// C. ZONE CHART
+function buildZoneChart(metric) {
+  const d = ZONE_DATA[metric || 'total'];
+  const ctx = document.getElementById('zoneChart');
+  if (zoneCI) zoneCI.destroy();
+  zoneCI = new Chart(ctx, {
+    type:'bar',
+    data:{labels:ZONE_LABELS, datasets:[{data:d, backgroundColor:ZONE_COLS, borderRadius:6, borderWidth:0}]},
+    options:{...bOpts, scales:{...bOpts.scales, x:{...bOpts.scales.x, ticks:{...bOpts.scales.x.ticks, maxRotation:30}}, y:{...bOpts.scales.y, beginAtZero:true}}}
+  });
+}
+
+// D. HEATMAP
+function buildHeatmap() {
+  const box = document.getElementById('hmBox');
+  const scale = document.getElementById('hmScale');
+  const zones = ['Canteen','Bird Nest','Engineering','Business','New Bldg','Hostel'];
+  const times = ['6am–9am','9am–12pm','12pm–3pm','3pm–6pm','6pm–9pm','9pm–12am','12am–6am'];
+  const data = {
+    Canteen:    [1,2,5,4,6,9,7],
+    'Bird Nest':[0,1,2,2,5,8,9],
+    Engineering:[1,3,6,5,4,2,1],
+    Business:   [0,2,4,4,3,3,1],
+    'New Bldg': [0,1,3,3,2,1,0],
+    Hostel:     [0,0,1,1,2,4,3]
+  };
+  const max = 9;
+  let html = `<div class="hm-grid" style="grid-template-columns:80px repeat(${times.length},1fr)">`;
+  html += `<div class="hm-cell hm-hdr"></div>`;
+  times.forEach(t => html += `<div class="hm-cell hm-hdr" style="font-size:10px;text-align:center">${t}</div>`);
+  zones.forEach(z => {
+    html += `<div class="hm-cell hm-lbl" style="font-size:11px">${z}</div>`;
+    times.forEach((t, ti) => {
+      const v = data[z] ? data[z][ti] : 0;
+      const p = v / max;
+      const bg = p > .7 ? `rgba(153,27,27,${p})` : p > .5 ? `rgba(239,68,68,${p*1.1})` : p > .25 ? `rgba(249,115,22,${p*1.3})` : p > .08 ? `rgba(245,158,11,${p*1.5})` : 'rgba(34,200,138,.12)';
+      html += `<div class="hm-cell" style="background:${bg}"><div class="hm-tt">${z} · ${t}: ${v} alerts</div></div>`;
+    });
+  });
+  html += '</div>';
+  box.innerHTML = html;
+  if (scale) {
+    scale.innerHTML = '';
+    for (let i = 0; i <= 9; i++) {
+      const p = i/9;
+      const bg = p>.7?`rgba(153,27,27,${p})`:p>.5?`rgba(239,68,68,${p*1.1})`:p>.25?`rgba(249,115,22,${p*1.3})`:p>.08?`rgba(245,158,11,${p*1.5})`:'rgba(34,200,138,.15)';
+      const d2 = document.createElement('div');
+      d2.style.cssText = `width:20px;height:14px;background:${bg};border-radius:3px`;
+      scale.appendChild(d2);
+    }
+  }
+}
+
+// E. REPEATED TRIGGERS
+function buildRepeatChart() {
+  const ctx = document.getElementById('repeatChart');
+  if (repeatCI) repeatCI.destroy();
+  repeatCI = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:['BIN-B03','BIN-B07','BIN-A04','BIN-C02','BIN-E05','BIN-D08','BIN-A01','BIN-B11'],
+      datasets:[{
+        label:'Repeated triggers (short window)',
+        data:[12,9,5,4,3,2,1,1],
+        backgroundColor:['#991b1b','#ef4444','#f97316','#f97316','#f59e0b','#f59e0b','#22c88a','#22c88a'],
+        borderRadius:6, borderWidth:0
+      }]
+    },
+    options:{...bOpts, scales:{...bOpts.scales, y:{...bOpts.scales.y, beginAtZero:true, title:{display:true, text:'Trigger count', color:'#9aa3bc', font:{size:10}}}}}
+  });
+}
+
+// F. DAY/NIGHT
+function buildDayNightChart() {
+  const ctx = document.getElementById('dayNightChart');
+  if (dayNightCI) dayNightCI.destroy();
+  dayNightCI = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:ZONE_LABELS.map(l => l.length > 12 ? l.slice(0,12)+'…' : l),
+      datasets:[
+        {label:'Day', data:[44,28,35,25,22,12], backgroundColor:'#f59e0b', borderRadius:4},
+        {label:'Night', data:[21,14,3,3,2,8], backgroundColor:'#991b1b', borderRadius:4}
+      ]
+    },
+    options:{...bOpts, plugins:{...bOpts.plugins, legend:{display:true, labels:{color:'#5a6480', boxWidth:10, font:{size:11}}}}, scales:{...bOpts.scales, x:{...bOpts.scales.x, stacked:false}, y:{...bOpts.scales.y, beginAtZero:true}}}
+  });
+}
+
+// H. TOP BINS RANK
+function renderRankList() {
+  const sorted = [...BINS].sort((a, b) => b.suspicious - a.suspicious).slice(0, 5);
+  const cols = ['#991b1b','#ef4444','#f97316','#f59e0b','#22c88a'];
+  const rankEmoji = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  document.getElementById('rankList').innerHTML = sorted.map((b, i) => {
+    const col = RISK_COLORS[b.risk];
+    const pct = Math.round((b.suspicious / 14) * 100);
+    return `<div class="rank-item" onclick="showBinModal('${b.id}')">
+      <div class="rank-num" style="background:${cols[i] || '#22c88a'};min-width:44px;font-size:20px">${rankEmoji[i]}</div>
+      <div class="rank-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <div>
+            <div class="rank-id">BIN-${b.id} · ${b.name}</div>
+            <div style="margin-top:3px"><span class="rbadge ${RISK_CLS[b.risk]}" style="font-size:10px">${RISK_LABELS[b.risk]}</span>${b.icon?` <span class="rbadge rb-med" style="font-size:10px">${ICON_EMOJI[b.icon]}</span>`:''}</div>
+          </div>
+          <div style="text-align:right"><div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;color:${col}">${b.suspicious}</div><div style="font-size:10px;color:var(--text3)">suspicious</div></div>
+        </div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--text3);font-weight:600;flex-wrap:wrap">
+          <span>👁️ ${b.motionToday} total</span>
+          <span>🌙 ${b.nightAlerts} night</span>
+          <span>🔁 ${b.repeated}× repeat</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:7px">
+          <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+          <span style="font-size:11px;font-weight:700;color:var(--text3)">${pct}%</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// I. PATROL TABLE
+function renderPatrolTable() {
+  const ACTIONS = {
+    darkred:'at-patrol', red:'at-patrol', orange:'at-animal', yellow:'at-observe', green:'at-ok'
+  };
+  const ACTION_LABELS = {
+    darkred:'🚨 Patrol now', red:'⚠️ Patrol now', orange:'🐕 Check for animals', yellow:'👁️ Observe', green:'✅ No action'
+  };
+  const sorted = [...BINS].sort((a, b) => b.suspicious - a.suspicious);
+  document.getElementById('patrolTable').innerHTML = sorted.map(b => `
+    <tr onclick="showBinModal('${b.id}')">
+      <td><strong style="font-family:'Nunito',sans-serif;font-weight:800">BIN-${b.id}</strong></td>
+      <td style="font-weight:600;color:var(--text)">${b.name}</td>
+      <td style="font-family:'Nunito',sans-serif;font-weight:700;color:${b.nightAlerts > 0 ? 'var(--crit)' : 'var(--text3)'}">${b.lastMotion}</td>
+      <td><span style="font-family:'Nunito',sans-serif;font-weight:800;color:${b.alerts > 2 ? 'var(--red)' : 'var(--amber)'}">${b.alerts}</span></td>
+      <td><span class="rbadge ${RISK_CLS[b.risk]}">${RISK_LABELS[b.risk]}</span></td>
+      <td><span class="action-tag ${ACTIONS[b.risk]}">${ACTION_LABELS[b.risk]}</span></td>
+    </tr>`).join('');
+}
+
+// J. DURATION
+function buildDurationChart() {
+  const ctx = document.getElementById('durationChart');
+  if (durationCI) durationCI.destroy();
+  durationCI = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:['BIN-B03','BIN-B07','BIN-A04','BIN-C02','BIN-E05','BIN-D08','BIN-A01','BIN-B11'],
+      datasets:[{
+        label:'Avg trigger duration (min)',
+        data:[18,15,8,6,5,4,2,1],
+        backgroundColor:['#991b1b','#ef4444','#f97316','#f97316','#f59e0b','#f59e0b','#22c88a','#22c88a'],
+        borderRadius:6, borderWidth:0
+      }]
+    },
+    options:{...bOpts, scales:{...bOpts.scales, y:{...bOpts.scales.y, beginAtZero:true, title:{display:true, text:'Minutes', color:'#9aa3bc', font:{size:10}}}}}
+  });
+}
+
+// K. CORRELATION
+function renderCorrelation() {
+  const items = BINS.slice(0, 6).map(b => {
+    const susp = b.fillChange <= 3;
+    const motPct  = Math.round((b.motionToday / 30) * 100);
+    const fillPct = Math.round((b.fillChange / 20) * 100);
+    const badge = susp ? `<span class="rbadge rb-high" style="font-size:10px">⚠️ Suspicious</span>` : `<span class="rbadge rb-safe" style="font-size:10px">✅ Normal</span>`;
+    return `<div class="corr-row">
+      <div class="corr-id">BIN-${b.id}</div>
+      <div class="corr-bars">
+        <div class="corr-bar-row">👁️ Motion<div class="corr-bar-bg"><div class="corr-bar-fill" style="width:${motPct}%;background:#3b82f6"></div></div><span style="font-size:11px;font-weight:700;color:var(--text3)">${b.motionToday}</span></div>
+        <div class="corr-bar-row">📦 Fill Δ<div class="corr-bar-bg"><div class="corr-bar-fill" style="width:${fillPct}%;background:${susp?'#ef4444':'#22c88a'}"></div></div><span style="font-size:11px;font-weight:700;color:var(--text3)">${b.fillChange}%</span></div>
+      </div>
+      <div class="corr-badge">${badge}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('corrGrid').innerHTML = items;
+}
+
+// L. COMBINED RISK
+function renderCombinedRisk() {
+  const items = BINS.slice(0, 7).map(b => {
+    const motScore   = b.suspicious >= 5 ? 3 : b.suspicious >= 3 ? 2 : b.suspicious >= 1 ? 1 : 0;
+    const moistScore = b.moisture === 'Wet' ? 2 : b.moisture === 'Moist' ? 1 : 0;
+    const contextScore = b.nightAlerts >= 3 ? 2 : b.nightAlerts >= 1 ? 1 : 0;
+    const total = motScore + moistScore + contextScore;
+    const level = total >= 5 ? {lbl:'Critical',cls:'rb-crit',ico:'🦟'} : total >= 3 ? {lbl:'High',cls:'rb-high',ico:'🔴'} : total >= 2 ? {lbl:'Moderate',cls:'rb-med',ico:'🟠'} : {lbl:'Low',cls:'rb-low',ico:'✅'};
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg);border-radius:9px;border:1px solid var(--border)">
+      <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;width:54px;color:var(--text)">BIN-${b.id}</div>
+      <div style="flex:1;font-size:11.5px;color:var(--text3);font-weight:600">${b.suspicious}x sus · ${b.moisture} · ${b.nightAlerts} night</div>
+      <span class="rbadge ${level.cls}" style="font-size:10px">${level.ico} ${level.lbl}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('combinedRisk').innerHTML = items;
+}
+
+// ═══════════════════════════════════════════
+// CHART UPDATES
+// ═══════════════════════════════════════════
+function updateMotionChart(r) { buildMotionChart(r); }
+function updateSuspChart(r)   { buildSuspChart(r); }
+function updateZoneChart(m)   { buildZoneChart(m); }
+function updateAllCharts(r)   { buildMotionChart(r); buildSuspChart(r); }
+
+function dispatchPatrol() { toast('warning', '🚨 Patrol Dispatched', 'Security team alerted to BIN-B03 and BIN-B07. ETA: 5 minutes.'); }
+function dispatchTobin(id) { toast('warning', `🚨 Patrol Dispatched to BIN-${id}`, 'Security guard has been alerted.'); }
+function exportPatrol()    { toast('info', '⬇ Export Ready', 'Patrol priority table exported as CSV.'); }
+
+// ═══════════════════════════════════════════
+// LIVE SIMULATION
+// ═══════════════════════════════════════════
+function simLive() {
+  BINS.forEach(b => {
+    if (b.risk === 'darkred' || b.risk === 'red') {
+      b.motionToday += Math.random() > .6 ? 1 : 0;
+      b.alerts += Math.random() > .85 ? 1 : 0;
+    }
+  });
+  document.getElementById('sTotalMotion').textContent = BINS.reduce((s, b) => s + b.motionToday, 0);
+  document.getElementById('sSuspEvents').textContent  = BINS.reduce((s, b) => s + b.suspicious, 0);
+  if (Math.random() < .04) {
+    const evts = [
+      {time:'Now', bin:'B03', loc:'Main Canteen',   event:'Motion spike', risk:'crit', desc:'Motion count increased — remain vigilant'},
+      {time:'Now', bin:'B07', loc:'Bird Nest Area',  event:'PIR trigger',  risk:'high', desc:'Single trigger at restricted time'},
+    ];
+    const e = evts[Math.floor(Math.random()*evts.length)];
+    STREAM_EVENTS.unshift(e);
+    if (STREAM_EVENTS.length > 15) STREAM_EVENTS.pop();
+    renderStream(STREAM_EVENTS);
+    toast('danger', `⚠️ New Alert: BIN-${e.bin}`, e.desc);
+  }
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function toast(type, title, msg) {
+  const ic  = {success:'✅', info:'ℹ️', warning:'⚠️', danger:'🚨'};
+  const bd  = {success:'var(--green)', info:'var(--blue)', warning:'var(--amber)', danger:'var(--red)'};
+  const t   = document.createElement('div'); t.className = 'toast';
+  t.style.borderLeft = '4px solid ' + (bd[type] || 'var(--blue)');
+  t.innerHTML = `<span style="font-size:20px;flex-shrink:0">${ic[type]||'ℹ️'}</span><div><div class="tttl">${title}</div><div class="tmsg">${msg}</div></div>`;
+  document.getElementById('toaBox').appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),350); }, 4500);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.addEventListener('load', () => {
+  initMap();
+  renderStream(STREAM_EVENTS);
+  buildMotionChart('24h');
+  buildSuspChart('24h');
+  buildZoneChart('total');
+  buildDayNightChart();
+  buildHeatmap();
+  buildRepeatChart();
+  buildDurationChart();
+  renderRankList();
+  renderPatrolTable();
+  renderCorrelation();
+  renderCombinedRisk();
+  setInterval(simLive, 6000);
+});
+</script>
+</body>
+</html>

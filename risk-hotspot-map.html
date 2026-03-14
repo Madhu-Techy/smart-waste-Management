@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Risk Hotspot Map — SmartBin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── SHARED BASE (copy from main dashboard or import) ── */
+:root{
+  --bg:#f4f6fb;--white:#fff;--border:#e8ecf4;--border2:#d5daea;
+  --text:#1a2035;--text2:#5a6480;--text3:#9aa3bc;
+  --green:#22c88a;--green-bg:#eafaf3;--green-bd:#b6ecd8;
+  --amber:#f59e0b;--amber-bg:#fff8e6;--amber-bd:#fde68a;
+  --red:#ef4444;--red-bg:#fff1f1;--red-bd:#fecaca;
+  --darkred:#991b1b;--darkred-bg:#fef2f2;
+  --blue:#3b82f6;--blue-bg:#eff6ff;--blue-bd:#bfdbfe;
+  --r:12px;--rlg:16px;
+  --sh:0 1px 4px rgba(30,40,80,.07),0 0 0 1px var(--border);
+  --shh:0 4px 16px rgba(30,40,80,.11),0 0 0 1px var(--border2);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+
+/* ── PAGE LAYOUT ── */
+.page{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* ── TOPBAR (matches main dashboard) ── */
+.top{background:var(--white);border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;flex-wrap:wrap}
+.ph{font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:var(--text)}
+.lpill{display:flex;align-items:center;gap:6px;background:var(--red-bg);border:1px solid var(--red-bd);color:#b91c1c;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:700}
+.rdot{width:7px;height:7px;background:var(--red);border-radius:50%;animation:pulse-dot 1.2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.6}}
+.tright{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sel{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:7px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;outline:none;font-weight:500}
+.sel:hover{border-color:var(--red)}
+.btn{padding:8px 16px;border-radius:10px;border:none;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.btn-r{background:var(--red);color:#fff}.btn-r:hover{background:#dc2626;transform:translateY(-1px)}
+.btn-o{background:var(--white);color:var(--text2);border:1px solid var(--border)}.btn-o:hover{background:var(--bg);color:var(--text);border-color:var(--border2)}
+
+/* ── BREADCRUMB ── */
+.bc{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text3);margin-bottom:18px}
+.bc a{color:var(--text3);text-decoration:none;cursor:pointer}.bc a:hover{color:var(--red)}
+.bc span:last-child{color:var(--text2);font-weight:600}.bc-sep{color:var(--text3)}
+
+/* ── SCROLL AREA ── */
+.cnt{flex:1;overflow-y:auto;padding:22px 24px}
+
+/* ── STAT PILLS (top summary row) ── */
+.risk-pills{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.rpill{display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:12px 16px;box-shadow:var(--sh);cursor:default;transition:all .2s;flex:1;min-width:150px}
+.rpill:hover{box-shadow:var(--shh);transform:translateY(-1px)}
+.rpill-ico{font-size:22px;flex-shrink:0}
+.rpill-num{font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;line-height:1}
+.rpill-lbl{font-size:11.5px;font-weight:600;color:var(--text3)}
+
+/* ── MAIN SPLIT LAYOUT ── */
+.main-split{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:16px}
+
+/* ── MAP CARD ── */
+.card{background:var(--white);border-radius:var(--rlg);box-shadow:var(--sh);overflow:hidden}
+.ch{padding:16px 20px 13px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.ct{font-family:'Nunito',sans-serif;font-size:14.5px;font-weight:800;color:var(--text)}
+.cd{font-size:12px;color:var(--text3);font-weight:500;margin-top:2px}
+.cb{padding:18px 20px}
+
+#risk-map{width:100%;height:480px;border-radius:0;z-index:1}
+
+/* ── MAP LEGEND ── */
+.map-legend-box{padding:14px 16px}
+.ml-title{font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;margin-bottom:12px;color:var(--text)}
+.ml-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.ml-row:last-child{border-bottom:none}
+.ml-dot{width:16px;height:16px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.8)}
+.ml-dot.pulse{animation:ring-pulse 1.5s ease-in-out infinite}
+@keyframes ring-pulse{0%,100%{box-shadow:0 0 0 0 rgba(153,27,27,.4)}50%{box-shadow:0 0 0 7px rgba(153,27,27,0)}}
+.ml-info{flex:1}
+.ml-label{font-size:13px;font-weight:700;color:var(--text)}
+.ml-desc{font-size:11px;color:var(--text3);font-weight:500;margin-top:1px}
+
+/* ── BIN INFO PANEL (right sidebar of map area) ── */
+.bin-sidebar{display:flex;flex-direction:column;gap:12px}
+.risk-bin-list{display:flex;flex-direction:column;gap:8px}
+.rbl-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);cursor:pointer;transition:all .15s}
+.rbl-item:hover{border-color:var(--border2);background:var(--white);box-shadow:var(--sh)}
+.rbl-item.danger{background:var(--red-bg);border-color:var(--red-bd)}
+.rbl-item.warn{background:var(--amber-bg);border-color:var(--amber-bd)}
+.rbl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.rbl-info{flex:1}
+.rbl-id{font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--text)}
+.rbl-desc{font-size:11.5px;color:var(--text3);font-weight:500;margin-top:1px}
+.rbl-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.b-darkred{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
+.b-red{background:var(--red-bg);color:#b91c1c;border:1px solid var(--red-bd)}
+.b-amber{background:var(--amber-bg);color:#b45309;border:1px solid var(--amber-bd)}
+.b-green{background:var(--green-bg);color:#0e9e6a;border:1px solid var(--green-bd)}
+.drill-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.drill-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px}
+
+/* ── CHARTS ROW ── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.cbox{position:relative}
+
+/* ── HEATMAP ── */
+.hm-grid{display:grid;gap:3px}
+.hm-cell{height:28px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;transition:transform .1s;position:relative}
+.hm-cell:hover{transform:scale(1.05);z-index:5}
+.hm-lbl{background:transparent;color:var(--text3);font-size:11px;font-weight:700;justify-content:flex-end;padding-right:8px}
+.hm-hdr{background:transparent;color:var(--text3);font-size:11px;font-weight:700}
+.hm-tooltip{position:absolute;background:var(--text);color:#fff;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;bottom:calc(100%+4px);left:50%;transform:translateX(-50%);display:none;pointer-events:none;z-index:10}
+.hm-cell:hover .hm-tooltip{display:block}
+
+/* ── LEAFLET CUSTOM MARKERS ── */
+.leaflet-popup-content-wrapper{border-radius:12px;box-shadow:var(--shh);font-family:'Plus Jakarta Sans',sans-serif}
+.leaflet-popup-content{font-size:13px;line-height:1.6;margin:12px 14px}
+.popup-bin-id{font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;margin-bottom:6px}
+.popup-row{display:flex;justify-content:space-between;gap:16px;font-size:12.5px;border-top:1px solid var(--border);padding-top:5px;margin-top:5px}
+.popup-key{color:var(--text3);font-weight:600}
+.popup-val{font-weight:700;color:var(--text)}
+.popup-btn{margin-top:10px;background:var(--red);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;width:100%;font-family:'Plus Jakarta Sans',sans-serif;transition:background .15s}
+.popup-btn:hover{background:#dc2626}
+
+/* Custom marker styles */
+.bin-marker{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer;transition:transform .15s}
+.bin-marker:hover{transform:scale(1.2)}
+.bm-green{background:#22c88a}
+.bm-yellow{background:#f59e0b}
+.bm-red{background:#ef4444}
+.bm-darkred{background:#991b1b;animation:marker-pulse 1.4s ease-in-out infinite}
+@keyframes marker-pulse{0%,100%{box-shadow:0 0 0 0 rgba(153,27,27,.5),0 2px 8px rgba(0,0,0,.2)}60%{box-shadow:0 0 0 12px rgba(153,27,27,0),0 2px 8px rgba(0,0,0,.2)}}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;align-items:center;gap:8px;padding:12px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg)}
+.filter-lbl{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
+.ftag{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text2);transition:all .15s}
+.ftag:hover{border-color:var(--border2);background:var(--bg)}
+.ftag.active-f{border-color:currentColor;background:currentColor}
+.ftag.active-f span{color:#fff}
+.ftag .fdot{width:9px;height:9px;border-radius:50%}
+
+/* ── TOAST ── */
+.toa{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--white);border-radius:14px;padding:13px 16px;min-width:290px;max-width:360px;display:flex;align-items:flex-start;gap:11px;animation:slideIn .3s ease;box-shadow:0 8px 30px rgba(20,30,80,.13),0 0 0 1px var(--border);transition:opacity .3s,transform .3s}
+@keyframes slideIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+.tico{font-size:20px;flex-shrink:0}
+.tttl{font-size:13px;font-weight:700;color:var(--text)}
+.tmsg{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){.main-split{grid-template-columns:1fr}.charts-row{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.charts-row{grid-template-columns:1fr}.risk-pills{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="top">
+    <div>
+      <div class="ph">🦟 Risk Hotspot Map</div>
+    </div>
+    <div class="lpill"><div class="rdot"></div>Health Risk Active</div>
+    <div class="tright">
+      <select class="sel" id="zoneFilterSel" onchange="filterZone(this.value)">
+        <option value="all">📍 All Zones</option>
+        <option value="A">Zone A</option>
+        <option value="B">Zone B</option>
+        <option value="C">Zone C</option>
+        <option value="D">Zone D</option>
+        <option value="E">Zone E</option>
+      </select>
+      <select class="sel" id="timeRangeSel" onchange="updateTrendChart(this.value)">
+        <option value="24h">Last 24 Hours</option>
+        <option value="7d">Last 7 Days</option>
+        <option value="30d">Last 30 Days</option>
+      </select>
+      <select class="sel" id="dayFilterSel">
+        <option value="all">Any Day</option>
+        <option value="weekday">Weekday</option>
+        <option value="weekend">Weekend</option>
+      </select>
+      <select class="sel" id="weekFilterSel">
+        <option value="this">This Week</option>
+        <option value="last">Last Week</option>
+      </select>
+      <select class="sel" id="timeFilterSel">
+        <option value="all">Any Time</option>
+        <option value="morning">Morning</option>
+        <option value="afternoon">Afternoon</option>
+        <option value="evening">Evening</option>
+        <option value="night">Night</option>
+      </select>
+      <button class="btn btn-o" onclick="applyTemporalFilters()">Apply Filters</button>
+      <button class="btn btn-o" onclick="resetAllFiltersGlobal()">↺ Reset All Filters</button>
+      <button class="btn btn-o" onclick="refreshData()">🔄 Refresh</button>
+      <button class="btn btn-r" onclick="exportReport()">⬇ Export Report</button>
+      <a href="mosquito-risk-panel.html" style="text-decoration:none"><button class="btn btn-o">🦟 Mosquito Panel</button></a>
+      <!-- Back to main dashboard link -->
+      <a href="smart-waste-dashboard (1).html" style="text-decoration:none">
+        <button class="btn btn-o">← Back to Dashboard</button>
+      </a>
+    </div>
+  </div>
+
+  <!-- SCROLLABLE CONTENT -->
+  <div class="cnt">
+
+    <!-- BREADCRUMB -->
+    <div class="bc">
+      <a href="smart-waste-dashboard (1).html">Home</a>
+      <span class="bc-sep">›</span>
+      <span>Risk Hotspot Map</span>
+    </div>
+
+    <!-- SUMMARY PILLS -->
+    <div class="risk-pills">
+      <div class="rpill">
+        <div class="rpill-ico">🦟</div>
+        <div>
+          <div class="rpill-num" style="color:#991b1b" id="pHighRisk">3</div>
+          <div class="rpill-lbl">High Mosquito Risk Bins</div>
+        </div>
+      </div>
+      <div class="rpill">
+        <div class="rpill-ico">💧</div>
+        <div>
+          <div class="rpill-num" style="color:var(--red)" id="pWetBins">6</div>
+          <div class="rpill-lbl">Wet Bins Right Now</div>
+        </div>
+      </div>
+      <div class="rpill">
+        <div class="rpill-ico">⚠️</div>
+        <div>
+          <div class="rpill-num" style="color:var(--amber)" id="pMoistBins">11</div>
+          <div class="rpill-lbl">Moist Bins (Watch)</div>
+        </div>
+      </div>
+      <div class="rpill">
+        <div class="rpill-ico">✅</div>
+        <div>
+          <div class="rpill-num" style="color:var(--green)" id="pSafeBins">35</div>
+          <div class="rpill-lbl">Dry / Safe Bins</div>
+        </div>
+      </div>
+      <div class="rpill">
+        <div class="rpill-ico">📈</div>
+        <div>
+          <div class="rpill-num" style="color:var(--blue)" id="pAlerts">14</div>
+          <div class="rpill-lbl">Moisture Alerts Today</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div style="background:var(--white);border-radius:var(--rlg);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden">
+      <div class="filter-bar">
+        <span class="filter-lbl">Show on map:</span>
+        <div class="ftag" id="f-darkred" onclick="toggleFilter('darkred',this)" style="color:#991b1b">
+          <div class="fdot" style="background:#991b1b"></div>
+          <span style="color:#991b1b">High Risk (Pulsing)</span>
+        </div>
+        <div class="ftag" id="f-red" onclick="toggleFilter('red',this)" style="color:#ef4444">
+          <div class="fdot" style="background:#ef4444"></div>
+          <span style="color:#ef4444">Wet Waste</span>
+        </div>
+        <div class="ftag" id="f-yellow" onclick="toggleFilter('yellow',this)" style="color:#f59e0b">
+          <div class="fdot" style="background:#f59e0b"></div>
+          <span style="color:#f59e0b">Medium Moisture</span>
+        </div>
+        <div class="ftag" id="f-green" onclick="toggleFilter('green',this)" style="color:#22c88a">
+          <div class="fdot" style="background:#22c88a"></div>
+          <span style="color:#22c88a">Dry / Safe</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN SPLIT: MAP + SIDEBAR -->
+    <div class="main-split">
+
+      <!-- LEAFLET MAP -->
+      <div class="card">
+        <div class="ch">
+          <div>
+            <div class="ct">🗺️ Moisture Risk Hotspot Map</div>
+            <div class="cd">Live moisture status at each bin location — tap any marker for details</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-o" style="font-size:12px;padding:5px 11px" onclick="mapFitAll()">Fit All</button>
+          </div>
+        </div>
+        <div id="risk-map"></div>
+      </div>
+
+      <!-- RIGHT PANEL: LEGEND + BIN LIST -->
+      <div class="bin-sidebar">
+
+        <!-- LEGEND -->
+        <div class="card">
+          <div class="ch"><div><div class="ct">Map Legend</div><div class="cd">What each marker colour means</div></div></div>
+          <div class="map-legend-box">
+            <div class="ml-row">
+              <div class="ml-dot" style="background:#22c88a"></div>
+              <div class="ml-info"><div class="ml-label">Dry / Safe</div><div class="ml-desc">No moisture detected — all good</div></div>
+            </div>
+            <div class="ml-row">
+              <div class="ml-dot" style="background:#f59e0b"></div>
+              <div class="ml-info"><div class="ml-label">Medium Moisture</div><div class="ml-desc">Slightly damp — watch closely</div></div>
+            </div>
+            <div class="ml-row">
+              <div class="ml-dot" style="background:#ef4444"></div>
+              <div class="ml-info"><div class="ml-label">Wet Waste</div><div class="ml-desc">Wet detected — health risk rising</div></div>
+            </div>
+            <div class="ml-row">
+              <div class="ml-dot pulse" style="background:#991b1b"></div>
+              <div class="ml-info"><div class="ml-label">🦟 High Mosquito Risk</div><div class="ml-desc">Repeated wetness — immediate action needed</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RISK BIN LIST -->
+        <div class="card" style="flex:1">
+          <div class="ch"><div><div class="ct">⚠️ Risk Bin List</div><div class="cd">Sorted by severity</div></div></div>
+          <div class="cb" style="padding:12px">
+            <div class="risk-bin-list" id="riskBinList"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><div><div class="ct">🔎 Drill-down</div><div class="cd">Selected hotspot details</div></div></div>
+          <div class="cb" id="hotspotDrill">
+            <div style="font-size:12px;color:var(--text3);font-weight:600">Select a marker, list item, chart bar, or heatmap cell to inspect details.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CHARTS ROW: 3 CHARTS -->
+    <div class="charts-row">
+
+      <!-- A. MOISTURE TREND LINE CHART -->
+      <div class="card">
+        <div class="ch">
+          <div>
+            <div class="ct">A. Moisture Trend</div>
+            <div class="cd">Number of wet bins over time</div>
+          </div>
+        </div>
+        <div class="cb" style="padding:16px 18px">
+          <div class="cbox" style="height:200px"><canvas id="trendChart"></canvas></div>
+          <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:10px;height:3px;background:#ef4444;display:inline-block;border-radius:2px"></span>Wet bins</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:10px;height:3px;background:#f59e0b;display:inline-block;border-radius:2px"></span>Moist bins</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B. SECTOR COMPARISON BAR CHART -->
+      <div class="card">
+        <div class="ch">
+          <div>
+            <div class="ct">B. Zone Comparison</div>
+            <div class="cd">Which zone has the most moisture risk?</div>
+          </div>
+          <select class="sel" style="font-size:11px;padding:4px 8px" onchange="updateSectorChart(this.value)">
+            <option value="count">Wet Bin Count</option>
+            <option value="freq">Alert Frequency</option>
+            <option value="duration">Avg Wet Duration</option>
+          </select>
+        </div>
+        <div class="cb" style="padding:16px 18px">
+          <div class="cbox" style="height:200px"><canvas id="sectorChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- C. TIME-OF-DAY HEATMAP -->
+      <div class="card">
+        <div class="ch">
+          <div>
+            <div class="ct">C. Peak Moisture Hours</div>
+            <div class="cd">When and where moisture alerts spike</div>
+          </div>
+        </div>
+        <div class="cb" style="padding:16px 18px">
+          <div style="overflow-x:auto" id="hmContainer"></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;font-weight:600;color:var(--text3)">
+            <span>Rare</span>
+            <div id="hmScale" style="display:flex;gap:2px"></div>
+            <span>Frequent</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /cnt -->
+</div><!-- /page -->
+
+<div class="toa" id="toaBox"></div>
+
+<script>
+// ── BIN DATA (extends the main BINS array with moisture history) ──
+const RISK_BINS = [
+  {id:'C03', zone:'C', lat:6.9145, lng:79.9731, moisture:'Wet',   wetCount:8, fill:71,  risk:'darkred', label:'🦟 HIGH RISK',  wetHrs:14, alertsToday:6},
+  {id:'B12', zone:'B', lat:6.9163, lng:79.9758, moisture:'Wet',   wetCount:5, fill:88,  risk:'darkred', label:'🦟 HIGH RISK',  wetHrs:9,  alertsToday:5},
+  {id:'E02', zone:'E', lat:6.9120, lng:79.9790, moisture:'Wet',   wetCount:3, fill:76,  risk:'red',     label:'Wet Waste',    wetHrs:5,  alertsToday:3},
+  {id:'A07', zone:'A', lat:6.9172, lng:79.9718, moisture:'Wet',   wetCount:2, fill:97,  risk:'red',     label:'Wet Waste',    wetHrs:4,  alertsToday:2},
+  {id:'D05', zone:'D', lat:6.9138, lng:79.9745, moisture:'Moist', wetCount:1, fill:45,  risk:'yellow',  label:'Medium Moist', wetHrs:2,  alertsToday:1},
+  {id:'A05', zone:'A', lat:6.9168, lng:79.9722, moisture:'Moist', wetCount:1, fill:61,  risk:'yellow',  label:'Medium Moist', wetHrs:2,  alertsToday:1},
+  {id:'B09', zone:'B', lat:6.9159, lng:79.9752, moisture:'Moist', wetCount:0, fill:82,  risk:'yellow',  label:'Medium Moist', wetHrs:1,  alertsToday:1},
+  {id:'C06', zone:'C', lat:6.9141, lng:79.9735, moisture:'Moist', wetCount:0, fill:58,  risk:'yellow',  label:'Medium Moist', wetHrs:1,  alertsToday:0},
+  {id:'A02', zone:'A', lat:6.9175, lng:79.9725, moisture:'Dry',   wetCount:0, fill:22,  risk:'green',   label:'Dry / Safe',   wetHrs:0,  alertsToday:0},
+  {id:'B04', zone:'B', lat:6.9156, lng:79.9762, moisture:'Dry',   wetCount:0, fill:35,  risk:'green',   label:'Dry / Safe',   wetHrs:0,  alertsToday:0},
+  {id:'D01', zone:'D', lat:6.9135, lng:79.9749, moisture:'Dry',   wetCount:0, fill:18,  risk:'green',   label:'Dry / Safe',   wetHrs:0,  alertsToday:0},
+  {id:'E07', zone:'E', lat:6.9116, lng:79.9795, moisture:'Dry',   wetCount:0, fill:29,  risk:'green',   label:'Dry / Safe',   wetHrs:0,  alertsToday:0},
+];
+
+// ── ACTIVE FILTERS ──
+const activeFilters = {darkred:true, red:true, yellow:true, green:true};
+let temporalFilters = {day:'all', week:'this', time:'all'};
+const GLOBAL_RESET_KEY='smartbin_global_filter_reset_token';
+const PAGE_RESET_KEY='smartbin_last_reset_hotspot';
+
+// ── LEAFLET MAP ──
+let leafMap, markersLayer = {};
+
+const COLORS = {
+  darkred: '#991b1b',
+  red:     '#ef4444',
+  yellow:  '#f59e0b',
+  green:   '#22c88a'
+};
+
+function makeMarkerIcon(risk) {
+  const cls = {darkred:'bm-darkred', red:'bm-red', yellow:'bm-yellow', green:'bm-green'}[risk];
+  const emoji = risk === 'darkred' ? '🦟' : risk === 'red' ? '💧' : risk === 'yellow' ? '⚠️' : '✅';
+  return L.divIcon({
+    className: '',
+    html: `<div class="bin-marker ${cls}">${emoji}</div>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -20]
+  });
+}
+
+function makePopupHTML(b) {
+  const riskColors = {darkred:'#991b1b', red:'#b91c1c', yellow:'#b45309', green:'#0e9e6a'};
+  const riskBg = {darkred:'#fef2f2', red:'#fff1f1', yellow:'#fff8e6', green:'#eafaf3'};
+  const col = riskColors[b.risk];
+  const bg = riskBg[b.risk];
+  return `<div style="min-width:200px">
+    <div class="popup-bin-id">BIN-${b.id} — Zone ${b.zone}</div>
+    <div style="display:inline-block;background:${bg};color:${col};border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;margin-bottom:8px">${b.label}</div>
+    <div class="popup-row"><span class="popup-key">Moisture</span><span class="popup-val" style="color:${col}">${b.moisture}</span></div>
+    <div class="popup-row"><span class="popup-key">Fill level</span><span class="popup-val">${b.fill}%</span></div>
+    <div class="popup-row"><span class="popup-key">Repeated wet events</span><span class="popup-val">${b.wetCount} times</span></div>
+    <div class="popup-row"><span class="popup-key">Hours wet today</span><span class="popup-val">${b.wetHrs}h</span></div>
+    <div class="popup-row"><span class="popup-key">Alerts today</span><span class="popup-val">${b.alertsToday}</span></div>
+    <button class="popup-btn" onclick="toast2('warning','Action Assigned','Health officer notified for BIN-${b.id}.')">🚨 Report to Health Team</button>
+  </div>`;
+}
+
+function initMap() {
+  leafMap = L.map('risk-map', {zoomControl: true, scrollWheelZoom: true}).setView([6.9148, 79.9752], 16);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(leafMap);
+
+  RISK_BINS.forEach(b => {
+    const marker = L.marker([b.lat, b.lng], {icon: makeMarkerIcon(b.risk)})
+      .bindPopup(makePopupHTML(b), {maxWidth: 260})
+      .on('click', () => showHotspotDrill(b, 'map marker'))
+      .addTo(leafMap);
+    markersLayer[b.id] = {marker, bin: b};
+  });
+}
+
+function mapFitAll() {
+  const visible = RISK_BINS.filter(b => activeFilters[b.risk]);
+  if (!visible.length) return;
+  const bounds = L.latLngBounds(visible.map(b => [b.lat, b.lng]));
+  leafMap.fitBounds(bounds, {padding: [40, 40]});
+}
+
+function filterZone(zone) {
+  RISK_BINS.forEach(b => {
+    const {marker} = markersLayer[b.id];
+    const show = (zone === 'all' || b.zone === zone) && activeFilters[b.risk];
+    if (show) marker.addTo(leafMap); else leafMap.removeLayer(marker);
+  });
+}
+
+function toggleFilter(type, el) {
+  activeFilters[type] = !activeFilters[type];
+  el.classList.toggle('active-f');
+  const zone = document.querySelector('.top .sel')?.value || 'all';
+  filterZone(zone);
+}
+
+// ── RISK BIN LIST ──
+function renderRiskList() {
+  const sorted = [...RISK_BINS].sort((a, b) => {
+    const order = {darkred:0, red:1, yellow:2, green:3};
+    return order[a.risk] - order[b.risk];
+  });
+  const col = {darkred:'b-darkred', red:'b-red', yellow:'b-amber', green:'b-green'};
+  const dot = {darkred:'#991b1b', red:'#ef4444', yellow:'#f59e0b', green:'#22c88a'};
+  const cls = {darkred:'danger', red:'danger', yellow:'warn', green:''};
+  document.getElementById('riskBinList').innerHTML = sorted.slice(0,8).map(b => `
+    <div class="rbl-item ${cls[b.risk]}" onclick="focusBin('${b.id}')">
+      <div class="rbl-dot" style="background:${dot[b.risk]};${b.risk==='darkred'?'animation:ring-pulse 1.5s ease-in-out infinite':''}"></div>
+      <div class="rbl-info">
+        <div class="rbl-id">BIN-${b.id} · Zone ${b.zone}</div>
+        <div class="rbl-desc">${b.moisture} · ${b.wetHrs}h wet today · ${b.alertsToday} alerts</div>
+      </div>
+      <span class="rbl-badge ${col[b.risk]}">${b.risk==='darkred'?'🦟 High':b.risk==='red'?'Wet':b.risk==='yellow'?'Moist':'Safe'}</span>
+    </div>`).join('');
+}
+
+function focusBin(id) {
+  const entry = markersLayer[id];
+  if (!entry) return;
+  leafMap.setView([entry.bin.lat, entry.bin.lng], 18, {animate: true});
+  setTimeout(() => entry.marker.openPopup(), 400);
+  showHotspotDrill(entry.bin, 'risk list');
+}
+
+function showHotspotDrill(bin, source) {
+  const riskLabel = bin.risk === 'darkred' ? 'High Risk' : bin.risk === 'red' ? 'Wet Waste' : bin.risk === 'yellow' ? 'Medium Moisture' : 'Safe';
+  const riskColor = bin.risk === 'darkred' ? '#991b1b' : bin.risk === 'red' ? '#ef4444' : bin.risk === 'yellow' ? '#f59e0b' : '#22c88a';
+  document.getElementById('hotspotDrill').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div>
+        <div style="font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--text)">BIN-${bin.id} · Zone ${bin.zone}</div>
+        <div style="font-size:11px;color:var(--text3);font-weight:600">Source: ${source}</div>
+      </div>
+      <span class="rbl-badge ${bin.risk === 'darkred' ? 'b-darkred' : bin.risk === 'red' ? 'b-red' : bin.risk === 'yellow' ? 'b-amber' : 'b-green'}">${riskLabel}</span>
+    </div>
+    <div class="drill-grid">
+      <div class="drill-box"><div style="font-size:11px;color:var(--text3);font-weight:700">Fill Level</div><div style="font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:${riskColor}">${bin.fill}%</div></div>
+      <div class="drill-box"><div style="font-size:11px;color:var(--text3);font-weight:700">Wet Hours</div><div style="font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:${riskColor}">${bin.wetHrs}h</div></div>
+      <div class="drill-box"><div style="font-size:11px;color:var(--text3);font-weight:700">Wet Events</div><div style="font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:var(--text)">${bin.wetCount}</div></div>
+      <div class="drill-box"><div style="font-size:11px;color:var(--text3);font-weight:700">Alerts Today</div><div style="font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:var(--text)">${bin.alertsToday}</div></div>
+    </div>
+    <button class="btn btn-r" style="margin-top:10px;font-size:12px;padding:6px 10px" onclick="toast2('warning','Action queued','Health inspection assigned for BIN-${bin.id}.')">Assign Health Inspection</button>
+  `;
+}
+
+function showZoneDrillFromChart(zone, metric, value, source) {
+  const bins = RISK_BINS.filter(b => b.zone === zone);
+  const highCount = bins.filter(b => b.risk === 'darkred' || b.risk === 'red').length;
+  document.getElementById('hotspotDrill').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div>
+        <div style="font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--text)">Zone ${zone} Drill-down</div>
+        <div style="font-size:11px;color:var(--text3);font-weight:600">Source: ${source}</div>
+      </div>
+      <span class="rbl-badge b-amber">${metric}</span>
+    </div>
+    <div class="drill-grid">
+      <div class="drill-box"><div style="font-size:11px;color:var(--text3);font-weight:700">Selected Metric</div><div style="font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:var(--amber)">${value}</div></div>
+      <div class="drill-box"><div style="font-size:11px;color:var(--text3);font-weight:700">Bins in Zone</div><div style="font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:var(--text)">${bins.length}</div></div>
+      <div class="drill-box"><div style="font-size:11px;color:var(--text3);font-weight:700">High/Wet Bins</div><div style="font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:var(--red)">${highCount}</div></div>
+      <div class="drill-box"><div style="font-size:11px;color:var(--text3);font-weight:700">Top Risk Bin</div><div style="font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;color:var(--text)">BIN-${(bins.sort((a,b)=>(b.alertsToday+b.wetHrs)-(a.alertsToday+a.wetHrs))[0]||{id:'N/A'}).id}</div></div>
+    </div>
+  `;
+}
+
+// ── CHART BASE OPTIONS ──
+const bOpts = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: {
+    legend: {display: false},
+    tooltip: {backgroundColor:'#fff', titleColor:'#1a2035', bodyColor:'#5a6480', borderColor:'#e8ecf4', borderWidth:1, padding:10, cornerRadius:8}
+  },
+  scales: {
+    x: {grid:{color:'rgba(232,236,244,.8)'}, ticks:{color:'#9aa3bc', font:{size:11, family:'Plus Jakarta Sans'}}},
+    y: {grid:{color:'rgba(232,236,244,.8)'}, ticks:{color:'#9aa3bc', font:{size:11, family:'Plus Jakarta Sans'}}}
+  }
+};
+
+// ── A. TREND CHART ──
+const TREND_DATA = {
+  '24h': {
+    labels: ['12am','2am','4am','6am','8am','10am','12pm','2pm','4pm','6pm','8pm','10pm'],
+    wet:   [1,1,0,1,2,3,4,5,6,5,4,6],
+    moist: [4,3,3,4,5,6,8,9,10,9,8,11]
+  },
+  '7d': {
+    labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    wet:   [3,4,2,5,4,6,6],
+    moist: [7,8,6,9,8,10,11]
+  },
+  '30d': {
+    labels: ['W1','W2','W3','W4'],
+    wet:   [18,22,19,26],
+    moist: [38,45,40,52]
+  }
+};
+
+let trendCI, sectorCI;
+
+function initTrendChart(range) {
+  const d = TREND_DATA[range || '24h'];
+  const timeAdj = temporalFilters.time === 'morning' ? -1 : temporalFilters.time === 'afternoon' ? 2 : temporalFilters.time === 'evening' ? 1 : temporalFilters.time === 'night' ? -2 : 0;
+  const weekAdj = temporalFilters.week === 'last' ? -1 : 0;
+  const dayMult = temporalFilters.day === 'weekend' ? 0.85 : temporalFilters.day === 'weekday' ? 1.08 : 1;
+  const ctx = document.getElementById('trendChart');
+  if (!ctx) return;
+  if (trendCI) trendCI.destroy();
+  trendCI = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: d.labels,
+      datasets: [
+        {label:'Wet bins', data: d.wet.map(v=>Math.max(0,Math.round((v + timeAdj + weekAdj) * dayMult))), borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.08)', fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#ef4444', borderWidth:2.5},
+        {label:'Moist bins', data: d.moist.map(v=>Math.max(0,Math.round((v + timeAdj + weekAdj) * dayMult))), borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.05)', fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#f59e0b', borderWidth:2, borderDash:[4,3]}
+      ]
+    },
+    options: {...bOpts, plugins:{...bOpts.plugins, legend:{display:false}}, scales:{...bOpts.scales, y:{...bOpts.scales.y, beginAtZero:true, ticks:{...bOpts.scales.y.ticks, stepSize:2}}}}
+  });
+}
+
+function updateTrendChart(range) { initTrendChart(range); }
+
+function applyTemporalFilters() {
+  temporalFilters.day = document.getElementById('dayFilterSel').value;
+  temporalFilters.week = document.getElementById('weekFilterSel').value;
+  temporalFilters.time = document.getElementById('timeFilterSel').value;
+
+  const range = document.getElementById('timeRangeSel').value;
+  initTrendChart(range);
+  initSectorChart('count');
+  buildHeatmap();
+
+  const dayFactor = temporalFilters.day === 'weekend' ? 0.85 : temporalFilters.day === 'weekday' ? 1.08 : 1;
+  const weekFactor = temporalFilters.week === 'last' ? 0.92 : 1;
+  const timeFactor = temporalFilters.time === 'morning' ? 0.9 : temporalFilters.time === 'afternoon' ? 1.15 : temporalFilters.time === 'evening' ? 1.05 : temporalFilters.time === 'night' ? 0.88 : 1;
+  const factor = dayFactor * weekFactor * timeFactor;
+
+  document.getElementById('pAlerts').textContent = Math.max(0, Math.round(14 * factor));
+  document.getElementById('pHighRisk').textContent = Math.max(0, Math.round(3 * factor));
+  document.getElementById('pWetBins').textContent = Math.max(0, Math.round(6 * factor));
+  document.getElementById('pMoistBins').textContent = Math.max(0, Math.round(11 * factor));
+  document.getElementById('pSafeBins').textContent = Math.max(0, Math.round(35 * (2 - factor)));
+  toast2('info', 'Filters Applied', `${temporalFilters.day} · ${temporalFilters.week} week · ${temporalFilters.time}`);
+}
+
+function resetHotspotFilters() {
+  document.getElementById('zoneFilterSel').value='all';
+  document.getElementById('timeRangeSel').value='24h';
+  document.getElementById('dayFilterSel').value='all';
+  document.getElementById('weekFilterSel').value='this';
+  document.getElementById('timeFilterSel').value='all';
+  temporalFilters={day:'all', week:'this', time:'all'};
+  Object.keys(activeFilters).forEach(k=>activeFilters[k]=true);
+  ['f-darkred','f-red','f-yellow','f-green'].forEach(id=>document.getElementById(id)?.classList.remove('active-f'));
+  filterZone('all');
+  initTrendChart('24h');
+  initSectorChart('count');
+  buildHeatmap();
+  document.getElementById('pAlerts').textContent='14';
+  document.getElementById('pHighRisk').textContent='3';
+  document.getElementById('pWetBins').textContent='6';
+  document.getElementById('pMoistBins').textContent='11';
+  document.getElementById('pSafeBins').textContent='35';
+}
+
+function resetAllFiltersGlobal(){
+  const token=String(Date.now());
+  localStorage.setItem(GLOBAL_RESET_KEY,token);
+  localStorage.setItem(PAGE_RESET_KEY,token);
+  resetHotspotFilters();
+  toast2('success','All filters reset','Defaults applied across dashboard pages.');
+}
+
+function applyPendingGlobalReset(){
+  const token=localStorage.getItem(GLOBAL_RESET_KEY);
+  if(!token)return;
+  const seen=localStorage.getItem(PAGE_RESET_KEY);
+  if(seen===token)return;
+  localStorage.setItem(PAGE_RESET_KEY,token);
+  resetHotspotFilters();
+}
+
+// ── B. SECTOR CHART ──
+const SECTOR_DATA = {
+  count:    {label:'Wet Bin Count',          data:[2,3,2,1,1], colors:['#ef4444','#991b1b','#ef4444','#f59e0b','#f59e0b']},
+  freq:     {label:'Moisture Alert Frequency',data:[8,11,9,3,4], colors:['#ef4444','#991b1b','#ef4444','#f59e0b','#f59e0b']},
+  duration: {label:'Avg Wet Duration (hrs)', data:[3.5,5.2,4.1,1.2,1.8], colors:['#ef4444','#991b1b','#ef4444','#f59e0b','#f59e0b']}
+};
+
+function initSectorChart(metric) {
+  const d = SECTOR_DATA[metric || 'count'];
+  const tAdj = temporalFilters.time === 'afternoon' ? 1 : temporalFilters.time === 'night' ? -1 : 0;
+  const wAdj = temporalFilters.week === 'last' ? -1 : 0;
+  const dMult = temporalFilters.day === 'weekend' ? 0.9 : temporalFilters.day === 'weekday' ? 1.05 : 1;
+  const adjusted = d.data.map(v => Math.max(0, Math.round((v + tAdj + wAdj) * dMult * 10) / 10));
+  const ctx = document.getElementById('sectorChart');
+  if (!ctx) return;
+  if (sectorCI) sectorCI.destroy();
+  sectorCI = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Zone A','Zone B','Zone C','Zone D','Zone E'],
+      datasets: [{label: d.label, data: adjusted, backgroundColor: d.colors, borderRadius:6, borderWidth:0}]
+    },
+    options: {
+      ...bOpts,
+      scales:{...bOpts.scales, y:{...bOpts.scales.y, beginAtZero:true}},
+      onClick: (_, elements) => {
+        if (!elements.length) return;
+        const i = elements[0].index;
+        const zone = ['A','B','C','D','E'][i];
+        showZoneDrillFromChart(zone, d.label, adjusted[i], 'zone comparison chart');
+      }
+    }
+  });
+}
+
+function updateSectorChart(metric) { initSectorChart(metric); }
+
+// ── C. HEATMAP ──
+function buildHeatmap() {
+  const container = document.getElementById('hmContainer');
+  const scale = document.getElementById('hmScale');
+  if (!container) return;
+
+  const zones = ['A','B','C','D','E'];
+  const times = ['6am','9am','12pm','3pm','6pm','9pm'];
+
+  // Simulated alert frequency data per zone per time block
+  const data = {
+    A: [1, 2, 3, 4, 5, 3],
+    B: [2, 4, 6, 8, 7, 5],
+    C: [3, 5, 7, 9, 8, 6],
+    D: [0, 1, 2, 2, 1, 1],
+    E: [1, 2, 3, 4, 4, 2]
+  };
+  const max = 9;
+
+  let html = `<div class="hm-grid" style="grid-template-columns:52px repeat(${times.length},1fr)">`;
+  html += `<div class="hm-cell hm-hdr"></div>`;
+  times.forEach(t => html += `<div class="hm-cell hm-hdr" style="font-size:10px">${t}</div>`);
+
+  zones.forEach(z => {
+    html += `<div class="hm-cell hm-lbl">Zone ${z}</div>`;
+    times.forEach((t, ti) => {
+      const timeShift = temporalFilters.time === 'afternoon' ? 1 : temporalFilters.time === 'night' ? -1 : 0;
+      const weekendScale = temporalFilters.day === 'weekend' ? 0.85 : temporalFilters.day === 'weekday' ? 1.05 : 1;
+      const weekScale = temporalFilters.week === 'last' ? 0.92 : 1;
+      const v = Math.max(0, Math.round((data[z][ti] + timeShift) * weekendScale * weekScale));
+      const intensity = v / max;
+      const bg = intensity > 0.7
+        ? `rgba(153,27,27,${intensity})`
+        : intensity > 0.4
+        ? `rgba(239,68,68,${intensity * 1.2})`
+        : intensity > 0.1
+        ? `rgba(245,158,11,${intensity * 1.5})`
+        : `rgba(34,200,138,${Math.max(0.12, 0.3 - intensity)})`;
+      html += `<div class="hm-cell" style="background:${bg}" onclick="showZoneDrillFromChart('${z}','Heatmap alerts','${v}','peak moisture heatmap')"><div class="hm-tooltip">Zone ${z} · ${t}: ${v} alerts</div></div>`;
+    });
+  });
+  html += '</div>';
+  container.innerHTML = html;
+
+  // Build scale bar
+  if (scale) {
+    scale.innerHTML = '';
+    for (let i = 0; i <= 9; i++) {
+      const p = i / 9;
+      const bg = p > 0.7 ? `rgba(153,27,27,${p})` : p > 0.4 ? `rgba(239,68,68,${p * 1.2})` : `rgba(245,158,11,${Math.max(0.1, p * 1.5)})`;
+      const d = document.createElement('div');
+      d.style.cssText = `width:18px;height:14px;background:${bg};border-radius:3px`;
+      scale.appendChild(d);
+    }
+  }
+}
+
+// ── UTILS ──
+function refreshData() {
+  toast2('info', '🔄 Data Refreshed', 'Moisture readings updated from all sensors.');
+  // Simulate slight data change
+  document.getElementById('pAlerts').textContent = Math.floor(12 + Math.random() * 5);
+}
+
+function exportReport() {
+  toast2('success', '📊 Report Exported', 'Moisture risk report saved as PDF.');
+}
+
+function toast2(type, title, msg) {
+  const ic = {success:'✅', info:'ℹ️', warning:'⚠️', danger:'🚨'};
+  const bd = {success:'var(--green)', info:'var(--blue)', warning:'var(--amber)', danger:'var(--red)'};
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.borderLeft = '4px solid ' + (bd[type] || 'var(--blue)');
+  t.innerHTML = `<span class="tico">${ic[type] || 'ℹ️'}</span><div><div class="tttl">${title}</div><div class="tmsg">${msg}</div></div>`;
+  document.getElementById('toaBox').appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; setTimeout(() => t.remove(), 350); }, 4000);
+}
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  initMap();
+  renderRiskList();
+  initTrendChart('24h');
+  initSectorChart('count');
+  buildHeatmap();
+  applyPendingGlobalReset();
+  const defaultBin = RISK_BINS.find(b => b.risk === 'darkred') || RISK_BINS[0];
+  if (defaultBin) showHotspotDrill(defaultBin, 'default');
+
+  // Live simulation — update wet bin count slowly
+  setInterval(() => {
+    if (trendCI) {
+      trendCI.data.datasets[0].data = trendCI.data.datasets[0].data.map(v =>
+        Math.max(0, Math.round(v + (Math.random() - 0.4)))
+      );
+      trendCI.update('none');
+    }
+  }, 4000);
+});
+</script>
+</body>
+</html>

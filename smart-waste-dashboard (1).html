@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBin — SLIIT Campus</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f4f6fb;--white:#ffffff;--border:#e8ecf4;--border2:#d5daea;
+  --text:#1a2035;--text2:#5a6480;--text3:#9aa3bc;
+  --green:#22c88a;--green-bg:#eafaf3;--green-bd:#b6ecd8;
+  --amber:#f59e0b;--amber-bg:#fff8e6;--amber-bd:#fde68a;
+  --red:#ef4444;--red-bg:#fff1f1;--red-bd:#fecaca;
+  --blue:#3b82f6;--blue-bg:#eff6ff;--blue-bd:#bfdbfe;
+  --purple:#8b5cf6;--purple-bg:#f5f3ff;
+  --r:12px;--rlg:16px;
+  --sh:0 1px 4px rgba(30,40,80,.07),0 0 0 1px var(--border);
+  --shh:0 4px 16px rgba(30,40,80,.10),0 0 0 1px var(--border2);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;font-size:14px;line-height:1.5}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sb{width:230px;min-width:230px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.logo-ring{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#22c88a,#16a96e);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.logo-name{font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;color:var(--text);line-height:1.1}
+.logo-sub{font-size:11px;color:var(--text3);font-weight:500;margin-top:2px}
+.nav-sec{padding:18px 20px 6px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.nl{display:flex;align-items:center;gap:10px;margin:2px 10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--text2);font-size:13.5px;font-weight:500;transition:all .15s;position:relative}
+.nl:hover{background:var(--bg);color:var(--text)}
+.nl.on{background:var(--green-bg);color:#0e9e6a;font-weight:700}
+.nl-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.nl.on .nl-ico{background:#d1f5e8}
+.nbadge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px}
+.sb-foot{margin-top:auto;padding:14px;border-top:1px solid var(--border)}
+.usr{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background .15s}
+.usr:hover{background:var(--bg)}
+.ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* TOPBAR */
+.top{background:var(--white);border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;flex-wrap:wrap}
+.ph{font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:var(--text)}
+.lpill{display:flex;align-items:center;gap:6px;background:var(--green-bg);border:1px solid var(--green-bd);color:#0e9e6a;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:700}
+.ldot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.tright{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sel{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:7px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;outline:none;font-weight:500}
+.sel:hover{border-color:var(--green)}
+.btn{padding:8px 16px;border-radius:10px;border:none;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.btn-g{background:var(--green);color:#fff}
+.btn-g:hover{background:#18a974;transform:translateY(-1px)}
+.btn-o{background:var(--white);color:var(--text2);border:1px solid var(--border)}
+.btn-o:hover{background:var(--bg);color:var(--text);border-color:var(--border2)}
+
+/* CONTENT */
+.cnt{flex:1;overflow-y:auto;padding:22px 24px}
+.sec{display:none}
+.sec.on{display:block}
+
+/* BREADCRUMB */
+.bc{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text3);margin-bottom:18px}
+.bc span:not(:last-child){cursor:pointer}.bc span:not(:last-child):hover{color:var(--green)}
+.bc span:last-child{color:var(--text2);font-weight:600}.bc-sep{color:var(--text3)}
+
+/* STAT CARDS */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.sc{background:var(--white);border-radius:var(--rlg);padding:18px 20px;box-shadow:var(--sh);transition:all .2s;cursor:default}
+.sc:hover{box-shadow:var(--shh);transform:translateY(-2px)}
+.sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sc-lbl{font-size:12.5px;font-weight:600;color:var(--text2)}
+.sc-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.sc-num{font-family:'Nunito',sans-serif;font-size:34px;font-weight:800;line-height:1;margin-bottom:6px}
+.sc-sub{font-size:12px;color:var(--text3);font-weight:500}
+.up-bad{color:var(--red);font-weight:700}
+.dn-good{color:var(--green);font-weight:700}
+
+/* CARDS */
+.card{background:var(--white);border-radius:var(--rlg);box-shadow:var(--sh);overflow:hidden}
+.ch{padding:16px 20px 13px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.ct{font-family:'Nunito',sans-serif;font-size:14.5px;font-weight:800;color:var(--text)}
+.cd{font-size:12px;color:var(--text3);font-weight:500;margin-top:2px}
+.cb{padding:18px 20px}
+
+/* GRID LAYOUTS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.g32{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.cbox{position:relative;height:220px}
+
+/* ALERTS */
+.als{display:flex;flex-direction:column;gap:9px}
+.ar{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid transparent;cursor:pointer;transition:transform .15s}
+.ar:hover{transform:translateX(4px)}
+.ar.dng{background:var(--red-bg);border-color:var(--red-bd)}
+.ar.wrn{background:var(--amber-bg);border-color:var(--amber-bd)}
+.ar.inf{background:var(--blue-bg);border-color:var(--blue-bd)}
+.ai{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.dng .ai{background:var(--red);animation:blink 1.4s ease-in-out infinite}
+.wrn .ai{background:var(--amber);animation:blink 2s ease-in-out infinite}
+.inf .ai{background:var(--blue)}
+.ab{flex:1}
+.aht{font-size:13px;font-weight:700;margin-bottom:2px}
+.dng .aht{color:#b91c1c}.wrn .aht{color:#b45309}.inf .aht{color:#1d4ed8}
+.adesc{font-size:12px;color:var(--text2);line-height:1.4}
+.awhen{font-size:11px;color:var(--text3);font-weight:500;margin-top:3px}
+.apill{background:transparent;border:1px solid;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;align-self:center;font-family:'Plus Jakarta Sans',sans-serif}
+.dng .apill{color:#b91c1c;border-color:#fca5a5}
+.wrn .apill{color:#b45309;border-color:#fcd34d}
+.inf .apill{color:#1d4ed8;border-color:#93c5fd}
+.apill:hover{color:#fff !important}
+.dng .apill:hover{background:var(--red);border-color:var(--red)}
+.wrn .apill:hover{background:var(--amber);border-color:var(--amber)}
+.inf .apill:hover{background:var(--blue);border-color:var(--blue)}
+
+/* PREDICTION */
+.pl{display:flex;flex-direction:column;gap:9px}
+.pi{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg);border-radius:12px;border:1px solid var(--border);transition:border-color .15s}
+.pi:hover{border-color:var(--border2)}
+.pid{font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;width:52px}
+.pinfo{flex:1}
+.ploc{font-size:12px;color:var(--text2);font-weight:500}
+.ptm{font-size:13px;font-weight:700;margin-top:2px}
+.utag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.u1{background:var(--red-bg);color:#b91c1c;border:1px solid var(--red-bd)}
+.u2{background:var(--amber-bg);color:#b45309;border:1px solid var(--amber-bd)}
+.u3{background:var(--blue-bg);color:#1d4ed8;border:1px solid var(--blue-bd)}
+.u4{background:var(--green-bg);color:#0e9e6a;border:1px solid var(--green-bd)}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.tf{background:var(--red-bg);color:#b91c1c}.tm{background:var(--amber-bg);color:#b45309}
+.tl{background:var(--green-bg);color:#0e9e6a}.twet{background:var(--red-bg);color:#b91c1c}
+.tmo{background:var(--amber-bg);color:#b45309}.tdry{background:var(--blue-bg);color:#1d4ed8}
+.ton{background:var(--red-bg);color:#b91c1c}.toff{background:var(--bg);color:var(--text3)}
+
+/* FILL BAR */
+.fb{height:7px;background:var(--bg);border-radius:4px;overflow:hidden;width:90px;border:1px solid var(--border)}
+.ff{height:100%;border-radius:4px}
+
+/* MAP */
+.mwrap{height:340px;background:#eef2f8;border-radius:var(--r);position:relative;overflow:hidden;border:1px solid var(--border)}
+.mgrid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.5}
+.ctag{position:absolute;top:12px;left:14px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--white);border:1px solid var(--border);padding:3px 9px;border-radius:6px}
+.zlbl{position:absolute;font-size:11px;font-weight:700;color:var(--text3);background:rgba(255,255,255,.75);padding:2px 7px;border-radius:5px}
+.mbin{position:absolute;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;transition:transform .2s,box-shadow .2s;border:2px solid rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.mbin:hover{transform:scale(1.3);z-index:10;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.mr{background:var(--red)}.ma{background:var(--amber)}.mg{background:var(--green)}
+.mtt{position:absolute;background:var(--text);color:#fff;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;white-space:nowrap;top:-38px;left:50%;transform:translateX(-50%);display:none;pointer-events:none}
+.mtt::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--text)}
+.mbin:hover .mtt{display:block}
+.mleg{position:absolute;bottom:14px;right:14px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.mlr{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);font-weight:500}
+.mlc{width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.8)}
+
+/* SECTOR CARDS */
+.szg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.szc{background:var(--white);border:1px solid var(--border);border-radius:var(--rlg);padding:16px;cursor:pointer;transition:all .2s}
+.szc:hover{box-shadow:var(--shh);transform:translateY(-2px);border-color:var(--green)}
+.szt{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.szn{font-family:'Nunito',sans-serif;font-size:15px;font-weight:800}
+.sft{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:9px;border:1px solid var(--border)}
+.sfb{height:100%;border-radius:4px}
+.szi{display:flex;gap:12px;font-size:12px;color:var(--text3);font-weight:500}
+
+/* TABLE */
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{border-bottom:2px solid var(--border)}
+th{padding:11px 14px;text-align:left;color:var(--text3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text2)}
+tr:last-child td{border-bottom:none}
+tbody tr{cursor:pointer;transition:background .12s}
+tbody tr:hover td{background:var(--bg);color:var(--text)}
+.batbar{height:8px;width:55px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.batfill{height:100%;border-radius:4px}
+
+/* HEATMAP */
+.hmw{overflow-x:auto}
+.hmg{display:grid;gap:3px}
+.hmc{height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;transition:transform .1s}
+.hmc:hover{transform:scale(1.08);z-index:2;position:relative}
+.hmlbl{background:transparent;color:var(--text3);font-size:11px;font-weight:600;justify-content:flex-end;padding-right:8px}
+.hmhdr{background:transparent;color:var(--text3);font-size:11px;font-weight:700}
+
+/* ANALYTICS TABS */
+.tabbar{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:18px}
+.atab{padding:9px 18px;font-size:13px;cursor:pointer;color:var(--text3);font-weight:600;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.atab:hover{color:var(--text)}.atab.on{color:var(--green);border-bottom-color:var(--green)}
+
+/* DEVICES */
+.dvs{display:flex;flex-direction:column;gap:9px}
+.dvr{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg);border-radius:12px;border:1px solid var(--border);font-size:13px}
+.dvid{font-family:'Nunito',sans-serif;font-weight:800;width:64px;color:var(--text);font-size:13px}
+.dvi{flex:1}
+.dvn{font-weight:600;color:var(--text)}
+.dvs2{font-size:12px;color:var(--text3);font-weight:500;margin-top:2px}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(20,30,60,.35);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center}
+.ov.open{display:flex}
+.mbox{background:var(--white);border-radius:20px;width:460px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(20,30,80,.18);animation:popIn .2s ease}
+@keyframes popIn{from{transform:scale(.94) translateY(12px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.mhd{padding:20px 22px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.mtit{font-family:'Nunito',sans-serif;font-weight:800;font-size:16px}
+.mcls{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.mcls:hover{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.mbody{padding:20px 22px}
+.dl{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13.5px}
+.dl:last-of-type{border-bottom:none}
+.dk{color:var(--text3);font-weight:600}.dv{font-weight:700;color:var(--text)}
+.mbtns{display:flex;gap:8px;margin-top:18px}
+
+/* TOAST */
+.toa{position:fixed;top:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--white);border-radius:14px;padding:13px 16px;min-width:290px;max-width:360px;display:flex;align-items:flex-start;gap:11px;animation:slideIn .3s ease;box-shadow:0 8px 30px rgba(20,30,80,.13),0 0 0 1px var(--border);transition:opacity .3s,transform .3s}
+@keyframes slideIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+.tico{font-size:20px;flex-shrink:0}
+.tttl{font-size:13px;font-weight:700;color:var(--text)}
+.tmsg{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* CHIPS */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.chip{display:flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--border);border-radius:20px;padding:5px 13px;font-size:12px;font-weight:600;color:var(--text2);box-shadow:var(--sh)}
+.cdot{width:8px;height:8px;border-radius:50%}
+
+/* INPUTS */
+.sinput{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:7px 13px;font-size:13px;outline:none;width:180px;font-family:'Plus Jakarta Sans',sans-serif}
+.sinput:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,200,138,.12)}
+
+/* OVERVIEW CONTROLS */
+.ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;margin-bottom:14px;border-radius:12px;background:var(--white);border:1px solid var(--border);box-shadow:var(--sh)}
+.ctrl-lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.ctrl-g{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.zd-card{margin-top:12px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:var(--sh)}
+.zd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.zd-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px}
+
+/* SETTINGS */
+.sgrp{background:var(--bg);border-radius:12px;padding:18px;border:1px solid var(--border);margin-bottom:14px}
+.slbl{font-size:13px;font-weight:700;color:var(--text2);display:block;margin-bottom:10px}
+.rrow{display:flex;align-items:center;gap:14px}
+input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
+.rval{font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;width:52px;color:var(--text)}
+
+/* SPARKLINE */
+.spk{display:flex;align-items:flex-end;gap:2px;height:28px;margin-top:10px}
+.spkb{flex:1;border-radius:2px;min-height:3px}
+
+/* RESPONSIVE */
+@media(max-width:1100px){.sg{grid-template-columns:repeat(2,1fr)}.g2,.g32{grid-template-columns:1fr}.szg{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.sb{width:64px;min-width:64px}.sb .logo-name,.sb .logo-sub,.nl span:not(.nl-ico),.sb-foot .usr div,.nav-sec,.nbadge{display:none}.nl{padding:10px;justify-content:center}.sg{grid-template-columns:1fr 1fr}.szg{grid-template-columns:1fr}.top{flex-wrap:wrap;gap:8px}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="logo-ring">🌿</div>
+    <div><div class="logo-name">SmartBin</div><div class="logo-sub">SLIIT Campus</div></div>
+  </div>
+  <div class="nav-sec">Main Menu</div>
+  <nav>
+    <div class="nl on" onclick="nav('overview',this)"><div class="nl-ico">🏠</div><span>Home</span></div>
+    <div class="nl" onclick="nav('map',this)"><div class="nl-ico">🗺️</div><span>Campus Map</span></div>
+    <div class="nl" onclick="nav('bins',this)"><div class="nl-ico">🗑️</div><span>All Bins</span></div>
+    <div class="nl" onclick="nav('alerts',this)"><div class="nl-ico">🔔</div><span>Alerts</span><span class="nbadge" id="abadge">3</span></div>
+    <div class="nl" onclick="nav('analytics',this)"><div class="nl-ico">📊</div><span>Reports</span></div>
+    <div class="nl" onclick="window.location.href='suspicious-activity.html'"><div class="nl-ico">🕵️</div><span>Susspicious Activity</span></div>
+    <div class="nl" onclick="window.location.href='mosquito-risk-panel.html'"><div class="nl-ico">🦟</div><span>Mosquito Panel</span></div>
+    <div class="nl" onclick="window.location.href='student-portal.html'"><div class="nl-ico">🎓</div><span>Student Portal</span></div>
+  </nav>
+  <div class="nav-sec">Tools</div>
+  <nav>
+    <div class="nl" onclick="nav('devices',this)"><div class="nl-ico">📡</div><span>Sensors</span></div>
+    <div class="nl" onclick="nav('settings',this)"><div class="nl-ico">⚙️</div><span>Settings</span></div>
+  </nav>
+  <div class="sb-foot">
+    <div class="usr">
+      <div class="ava">AS</div>
+      <div><div style="font-size:13px;font-weight:700;color:var(--text)">A. Silva</div><div style="font-size:11px;color:var(--text3)">Supervisor</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <!-- TOPBAR -->
+  <div class="top">
+    <div class="ph" id="ph">Dashboard Home</div>
+    <div class="lpill"><div class="ldot"></div>Live</div>
+    <div class="tright">
+      <select class="sel" onchange="chRole(this.value)">
+        <option value="supervisor">👷 Supervisor</option>
+        <option value="health">🏥 Health Officer</option>
+        <option value="maintenance">🔧 Maintenance</option>
+        <option value="manager">📋 Manager</option>
+      </select>
+      <select class="sel">
+        <option value="all">📍 All Zones</option>
+        <option value="A">Zone A</option><option value="B">Zone B</option>
+        <option value="C">Zone C</option><option value="D">Zone D</option><option value="E">Zone E</option>
+      </select>
+      <a href="risk-hotspot-map.html" style="text-decoration:none"><button class="btn btn-o">🗺️ Hotspot Map</button></a>
+      <a href="mosquito-risk-panel.html" style="text-decoration:none"><button class="btn btn-o">🦟 Mosquito Panel</button></a>
+      <button class="btn btn-o" onclick="resetAllFiltersGlobal()">↺ Reset All Filters</button>
+      <button class="btn btn-o" onclick="toast2('info','Downloading...','Your report is being prepared.')">⬇ Download</button>
+      <button class="btn btn-g" onclick="openAssign()">+ Assign Pickup</button>
+    </div>
+  </div>
+
+  <div class="cnt">
+
+    <!-- HOME -->
+    <section class="sec on" id="section-overview">
+      <div class="bc"><span onclick="nav('overview',null)">SmartBin</span><span class="bc-sep">›</span><span>Dashboard Home</span></div>
+      <div class="chips">
+        <div class="chip"><div class="cdot" style="background:#cbd5e1"></div>Updated 2 min ago</div>
+        <div class="chip"><div class="cdot" style="background:var(--green)"></div>48 bins working fine</div>
+        <div class="chip"><div class="cdot" style="background:var(--red)"></div>3 need urgent attention</div>
+        <div class="chip"><div class="cdot" style="background:var(--amber)"></div>7 getting full soon</div>
+      </div>
+      <div class="ctrl">
+        <div>
+          <div class="ctrl-lbl">Overview Filters & Controls</div>
+          <div style="font-size:12px;color:var(--text3);font-weight:500">Use filters to update KPIs, charts, and zone drill-down</div>
+        </div>
+        <div class="ctrl-g">
+          <select class="sel" id="ovZoneFilter" style="font-size:12px;padding:5px 10px">
+            <option value="all">All Zones</option>
+            <option value="A">Zone A</option>
+            <option value="B">Zone B</option>
+            <option value="C">Zone C</option>
+            <option value="D">Zone D</option>
+            <option value="E">Zone E</option>
+          </select>
+          <select class="sel" id="ovStatusFilter" style="font-size:12px;padding:5px 10px">
+            <option value="all">All Status</option>
+            <option value="full">Overflowing</option>
+            <option value="medium">Getting Full</option>
+            <option value="low">Low Fill</option>
+          </select>
+          <select class="sel" id="ovMoistFilter" style="font-size:12px;padding:5px 10px">
+            <option value="all">All Moisture</option>
+            <option value="Wet">Wet</option>
+            <option value="Moist">Moist</option>
+            <option value="Dry">Dry</option>
+          </select>
+          <select class="sel" id="ovDayFilter" style="font-size:12px;padding:5px 10px">
+            <option value="all">Any Day</option>
+            <option value="weekday">Weekday</option>
+            <option value="weekend">Weekend</option>
+          </select>
+          <select class="sel" id="ovWeekFilter" style="font-size:12px;padding:5px 10px">
+            <option value="this">This Week</option>
+            <option value="last">Last Week</option>
+          </select>
+          <select class="sel" id="ovTimeFilter" style="font-size:12px;padding:5px 10px">
+            <option value="all">Any Time</option>
+            <option value="morning">Morning</option>
+            <option value="afternoon">Afternoon</option>
+            <option value="evening">Evening</option>
+            <option value="night">Night</option>
+          </select>
+          <button class="btn btn-g" style="font-size:12px;padding:6px 10px" onclick="applyOverviewFilters()">Apply</button>
+          <button class="btn btn-o" style="font-size:12px;padding:6px 10px" onclick="resetOverviewFilters()">Reset</button>
+        </div>
+      </div>
+      <div class="sg">
+        <div class="sc"><div class="sc-top"><div class="sc-lbl">Total Bins</div><div class="sc-ico" style="background:var(--green-bg)">♻️</div></div><div class="sc-num" style="color:var(--green)" id="kpiTotalBins">52</div><div class="sc-sub" id="kpiOnlineOffline">48 online · 4 offline</div><div class="spk" id="sp1"></div></div>
+        <div class="sc"><div class="sc-top"><div class="sc-lbl">Bins Almost Full</div><div class="sc-ico" style="background:var(--red-bg)">🚨</div></div><div class="sc-num" style="color:var(--red)" id="kpiAlmostFull">7</div><div class="sc-sub" id="kpiUrgencySub"><span class="up-bad">↑ +2</span> since this morning</div><div class="spk" id="sp2"></div></div>
+        <div class="sc"><div class="sc-top"><div class="sc-lbl">Average Fullness</div><div class="sc-ico" style="background:var(--amber-bg)">📊</div></div><div class="sc-num" style="color:var(--amber)" id="kpiAvgFullness">68%</div><div class="sc-sub" id="kpiAvgSub"><span class="up-bad">↑ 12%</span> from yesterday</div><div class="spk" id="sp3"></div></div>
+        <div class="sc"><div class="sc-top"><div class="sc-lbl">Motion Events Today</div><div class="sc-ico" style="background:var(--blue-bg)">👁️</div></div><div class="sc-num" style="color:var(--blue)" id="kpiMotion">14</div><div class="sc-sub">Possible animal or tampering</div><div class="spk" id="sp4"></div></div>
+      </div>
+
+      <div class="g32">
+        <div class="card">
+          <div class="ch"><div><div class="ct">Bin Fullness Over the Day</div><div class="cd">Average fill level across all bins (every 2 hours)</div></div>
+            <select class="sel" style="font-size:12px;padding:5px 10px" onchange="updFill(this.value)"><option value="all">All Zones</option><option value="A">Zone A</option><option value="B">Zone B</option><option value="C">Zone C</option></select>
+          </div>
+          <div class="cb"><div class="cbox"><canvas id="fillChart"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><div><div class="ct">Bin Status Breakdown</div><div class="cd">Right now across campus</div></div></div>
+          <div class="cb">
+            <div class="cbox" style="height:170px"><canvas id="donutChart"></canvas></div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px">
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:var(--red);display:inline-block"></span>Overflowing (7)</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:var(--amber);display:inline-block"></span>Getting full (23)</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:var(--green);display:inline-block"></span>All good (18)</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:#cbd5e1;display:inline-block"></span>Offline (4)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="ch"><div><div class="ct">🔔 Active Alerts</div><div class="cd">These bins need your attention now</div></div><button class="btn btn-o" style="font-size:12px;padding:5px 11px" onclick="nav('alerts',null)">See all</button></div>
+          <div class="cb"><div class="als">
+            <div class="ar dng"><div class="ai"></div><div class="ab"><div class="aht">🗑️ Bin A07 is almost overflowing!</div><div class="adesc">It's 97% full. Located near Zone A, Block 3. Motion also detected nearby.</div><div class="awhen">2 minutes ago · Zone A</div></div><button class="apill" onclick="showBin('A07')">Assign →</button></div>
+            <div class="ar wrn"><div class="ai"></div><div class="ab"><div class="aht">💧 Wet waste found in Bin C03</div><div class="adesc">Moisture detected — health risk, possible mosquito breeding.</div><div class="awhen">8 minutes ago · Zone C</div></div><button class="apill" onclick="showBin('C03')">Inspect →</button></div>
+            <div class="ar wrn"><div class="ai"></div><div class="ab"><div class="aht">⚠️ Bin B12 filled up too fast</div><div class="adesc">Fill jumped 65% in 12 minutes — possible illegal dumping.</div><div class="awhen">15 minutes ago · Zone B</div></div><button class="apill" onclick="showBin('B12')">Check →</button></div>
+            <div class="ar inf"><div class="ai"></div><div class="ab"><div class="aht">🐾 Animal activity near Bin D05</div><div class="adesc">Motion sensor triggered 7 times in 1 hour. Likely a dog or stray animal.</div><div class="awhen">22 minutes ago · Zone D</div></div><button class="apill">Dispatch →</button></div>
+          </div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><div><div class="ct">🔮 Overflow Predictions</div><div class="cd">Which bins will overflow in the next 2 hours?</div></div></div>
+          <div class="cb"><div class="pl">
+            <div class="pi"><div class="pid" style="color:var(--red)">A07</div><div class="pinfo"><div class="ploc">Zone A · Currently 97% full</div><div class="ptm" style="color:var(--red)">Overflows in ~10 minutes</div></div><span class="utag u1">Urgent</span></div>
+            <div class="pi"><div class="pid" style="color:var(--amber)">B09</div><div class="pinfo"><div class="ploc">Zone B · Currently 82% full</div><div class="ptm" style="color:var(--amber)">Overflows in ~45 minutes</div></div><span class="utag u2">Soon</span></div>
+            <div class="pi"><div class="pid" style="color:var(--blue)">E02</div><div class="pinfo"><div class="ploc">Zone E · Currently 76% full</div><div class="ptm" style="color:var(--blue)">Overflows in ~1.5 hours</div></div><span class="utag u3">Watch</span></div>
+            <div class="pi"><div class="pid" style="color:var(--green)">C06</div><div class="pinfo"><div class="ploc">Zone C · Currently 58% full</div><div class="ptm" style="color:var(--green)">Overflows in ~3 hours</div></div><span class="utag u4">Fine for now</span></div>
+          </div></div>
+        </div>
+      </div>
+
+      <div style="margin:20px 0 12px"><div style="font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;color:var(--text)">Zone Performance</div><div style="font-size:13px;color:var(--text3);font-weight:500;margin-top:2px">Click any zone to explore its bins</div></div>
+      <div class="szg" id="szCards"></div>
+      <div class="zd-card" id="zoneDrill" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <div>
+            <div style="font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--text)" id="zdTitle">Zone Drill-down</div>
+            <div style="font-size:12px;color:var(--text3);font-weight:500" id="zdSubtitle">Operational metrics for selected zone</div>
+          </div>
+          <button class="btn btn-o" style="font-size:12px;padding:6px 10px" onclick="nav('bins',null)">Open Bin Table</button>
+        </div>
+        <div class="zd-grid" id="zdGrid"></div>
+      </div>
+    </section>
+
+    <!-- MAP -->
+    <section class="sec" id="section-map">
+      <div class="bc"><span onclick="nav('overview',null)">Home</span><span class="bc-sep">›</span><span>Campus Map</span></div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="ch"><div><div class="ct">📍 Live Bin Map — SLIIT Campus</div><div class="cd">Tap any bin marker to see its details</div></div><button class="btn btn-o" style="font-size:12px;padding:5px 11px" onclick="toast2('info','Map Refreshed','Bin locations updated.')">🔄 Refresh</button></div>
+        <div class="cb" style="padding:0">
+          <div class="mwrap">
+            <div class="mgrid"></div>
+            <div class="ctag">SLIIT Malabe Campus</div>
+            <div class="zlbl" style="top:58px;left:78px">Zone A</div>
+            <div class="zlbl" style="top:58px;left:238px">Zone B</div>
+            <div class="zlbl" style="top:168px;left:78px">Zone C</div>
+            <div class="zlbl" style="top:168px;left:238px">Zone D</div>
+            <div class="zlbl" style="top:248px;left:400px">Zone E</div>
+            <div class="mbin mr" style="left:98px;top:88px" onclick="showBin('A07')">🗑<div class="mtt">Bin A07 · 97% FULL 🚨</div></div>
+            <div class="mbin mg" style="left:140px;top:108px" onclick="showBin('A02')">🗑<div class="mtt">Bin A02 · 22% OK ✅</div></div>
+            <div class="mbin ma" style="left:118px;top:138px" onclick="showBin('A05')">🗑<div class="mtt">Bin A05 · 61%</div></div>
+            <div class="mbin ma" style="left:268px;top:83px" onclick="showBin('B09')">🗑<div class="mtt">Bin B09 · 82%</div></div>
+            <div class="mbin mr" style="left:308px;top:103px" onclick="showBin('B12')">🗑<div class="mtt">Bin B12 · Illegal dump? ⚠️</div></div>
+            <div class="mbin mg" style="left:288px;top:128px" onclick="showBin('B04')">🗑<div class="mtt">Bin B04 · 35% OK ✅</div></div>
+            <div class="mbin ma" style="left:88px;top:208px" onclick="showBin('C03')">🗑<div class="mtt">Bin C03 · WET WASTE 💧</div></div>
+            <div class="mbin ma" style="left:133px;top:223px" onclick="showBin('C06')">🗑<div class="mtt">Bin C06 · 58%</div></div>
+            <div class="mbin ma" style="left:258px;top:198px" onclick="showBin('D05')">🗑<div class="mtt">Bin D05 · Animal activity 🐾</div></div>
+            <div class="mbin mg" style="left:298px;top:218px" onclick="showBin('D01')">🗑<div class="mtt">Bin D01 · 18% OK ✅</div></div>
+            <div class="mbin ma" style="left:428px;top:253px" onclick="showBin('E02')">🗑<div class="mtt">Bin E02 · 76%</div></div>
+            <div class="mbin mg" style="left:468px;top:268px" onclick="showBin('E07')">🗑<div class="mtt">Bin E07 · 29% OK ✅</div></div>
+            <div class="mleg">
+              <div class="mlr"><div class="mlc" style="background:var(--red)"></div>Overflowing / Critical</div>
+              <div class="mlr"><div class="mlc" style="background:var(--amber)"></div>Getting Full / Warning</div>
+              <div class="mlr"><div class="mlc" style="background:var(--green)"></div>All Good</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card"><div class="ch"><div class="ct">Zone Fullness Comparison</div></div><div class="cb"><div class="cbox" style="height:200px"><canvas id="zoneBar"></canvas></div></div></div>
+        <div class="card"><div class="ch"><div><div class="ct">🚛 Recommended Route</div><div class="cd">Best collection order for today</div></div></div>
+          <div class="cb"><div class="pl">
+            <div class="pi"><div class="pid" style="color:var(--text3);font-size:20px">①</div><div class="pinfo"><div class="ploc">Zone A → Zone B → Zone C</div><div class="ptm" style="color:var(--red);font-size:12px">3 bins need urgent pickup</div></div><span class="utag u1">Go now</span></div>
+            <div class="pi"><div class="pid" style="color:var(--text3);font-size:20px">②</div><div class="pinfo"><div class="ploc">Zone D → Zone E</div><div class="ptm" style="color:var(--amber);font-size:12px">2 bins filling up</div></div><span class="utag u2">Within 1 hour</span></div>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ALL BINS -->
+    <section class="sec" id="section-bins">
+      <div class="bc"><span onclick="nav('overview',null)">Home</span><span class="bc-sep">›</span><span>All Bins</span></div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">🗑️ All Bins — Live Status</div><div class="cd">Click any row to view full details</div></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="sinput" type="text" placeholder="🔍 Search bin ID..." oninput="filterT(this.value)">
+            <select class="sel" onchange="sortT(this.value)"><option value="fd">Fullest First</option><option value="fa">Emptiest First</option><option value="id">Bin ID</option></select>
+          </div>
+        </div>
+        <div class="cb" style="padding:0"><div class="tscroll"><table>
+          <thead><tr><th>Bin ID</th><th>Zone</th><th>How Full?</th><th>Status</th><th>Moisture</th><th>Motion</th><th>Battery</th><th>Last Update</th><th>Action</th></tr></thead>
+          <tbody id="btbody"></tbody>
+        </table></div></div>
+      </div>
+    </section>
+
+    <!-- ALERTS -->
+    <section class="sec" id="section-alerts">
+      <div class="bc"><span onclick="nav('overview',null)">Home</span><span class="bc-sep">›</span><span>Alerts</span></div>
+      <div class="g2">
+        <div class="card">
+          <div class="ch"><div><div class="ct">🔔 All Active Alerts</div><div class="cd">Sorted by urgency — most urgent first</div></div></div>
+          <div class="cb"><div class="als">
+            <div class="ar dng"><div class="ai"></div><div class="ab"><div class="aht">🚨 Bin A07 is overflowing!</div><div class="adesc">97% full. Collection truck must go here immediately.</div><div class="awhen">2 min ago · Zone A</div></div><button class="apill" onclick="showBin('A07')">Send Truck</button></div>
+            <div class="ar dng"><div class="ai"></div><div class="ab"><div class="aht">🚨 Suspicious dumping at Bin B12</div><div class="adesc">Waste jumped from 23% to 88% in 15 minutes. Possible illegal dumping.</div><div class="awhen">15 min ago · Zone B</div></div><button class="apill">Investigate</button></div>
+            <div class="ar wrn"><div class="ai"></div><div class="ab"><div class="aht">💧 Wet waste in Bin C03 — health risk</div><div class="adesc">Bin is wet inside. Mosquito breeding risk in 2 hours if not emptied.</div><div class="awhen">8 min ago · Zone C</div></div><button class="apill">Report to Health</button></div>
+            <div class="ar wrn"><div class="ai"></div><div class="ab"><div class="aht">⏰ Bin B09 filling up fast</div><div class="adesc">Currently 82% full. Will overflow in about 45 minutes.</div><div class="awhen">5 min ago · Zone B</div></div><button class="apill">Schedule</button></div>
+            <div class="ar inf"><div class="ai"></div><div class="ab"><div class="aht">🐾 Animal near Bin D05</div><div class="adesc">Motion sensor went off 7 times in the last hour. Likely a dog or animal.</div><div class="awhen">22 min ago · Zone D</div></div><button class="apill">Send Pest Control</button></div>
+            <div class="ar inf"><div class="ai"></div><div class="ab"><div class="aht">🔋 Bin E04 battery running low</div><div class="adesc">Battery at 2.8V — device may stop sending updates soon.</div><div class="awhen">1 hour ago · Zone E</div></div><button class="apill">Schedule Maintenance</button></div>
+          </div></div>
+        </div>
+        <div class="card"><div class="ch"><div class="ct">Alert History — Last 7 Days</div></div><div class="cb"><div class="cbox" style="height:180px"><canvas id="alertHist"></canvas></div></div></div>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="sec" id="section-analytics">
+      <div class="bc"><span onclick="nav('overview',null)">Home</span><span class="bc-sep">›</span><span>Reports</span></div>
+      <div class="tabbar">
+        <div class="atab on" onclick="switchTab('fill',this)">📈 Fill Trends</div>
+        <div class="atab" onclick="switchTab('heatmap',this)">🕐 Peak Hours</div>
+        <div class="atab" onclick="switchTab('moisture',this)">💧 Moisture</div>
+        <div class="atab" onclick="switchTab('collections',this)">🚛 Collections</div>
+      </div>
+      <div id="tab-fill">
+        <div class="g2">
+          <div class="card"><div class="ch"><div class="ct">Daily Fill by Zone (past 7 days)</div></div><div class="cb"><div class="cbox"><canvas id="zlineChart"></canvas></div></div></div>
+          <div class="card"><div class="ch"><div class="ct">Moisture Types Across All Bins</div></div><div class="cb"><div class="cbox" style="height:200px"><canvas id="moistDonut"></canvas></div></div></div>
+        </div>
+      </div>
+      <div id="tab-heatmap" style="display:none"><div class="card"><div class="ch"><div><div class="ct">🕐 When Are Bins Fullest?</div><div class="cd">Darker color = bins are more full at that time</div></div></div><div class="cb"><div class="hmw" id="hmbox"></div></div></div></div>
+      <div id="tab-moisture" style="display:none"><div class="card"><div class="ch"><div class="ct">Moisture Levels — This Week</div></div><div class="cb"><div class="cbox"><canvas id="moistWeek"></canvas></div></div></div></div>
+      <div id="tab-collections" style="display:none"><div class="card"><div class="ch"><div class="ct">🚛 Collections This Month</div></div><div class="cb"><div class="cbox"><canvas id="collectChart"></canvas></div></div></div></div>
+    </section>
+
+    <!-- SENSORS -->
+    <section class="sec" id="section-devices">
+      <div class="bc"><span onclick="nav('overview',null)">Home</span><span class="bc-sep">›</span><span>Sensors & Devices</span></div>
+      <div class="sg">
+        <div class="sc"><div class="sc-top"><div class="sc-lbl">Working Fine</div><div class="sc-ico" style="background:var(--green-bg)">✅</div></div><div class="sc-num" style="color:var(--green)">48</div><div class="sc-sub">Online and sending data</div></div>
+        <div class="sc"><div class="sc-top"><div class="sc-lbl">Not Responding</div><div class="sc-ico" style="background:var(--red-bg)">❌</div></div><div class="sc-num" style="color:var(--red)">4</div><div class="sc-sub">Need to be checked</div></div>
+        <div class="sc"><div class="sc-top"><div class="sc-lbl">Low Battery</div><div class="sc-ico" style="background:var(--amber-bg)">🔋</div></div><div class="sc-num" style="color:var(--amber)">6</div><div class="sc-sub">Need replacement soon</div></div>
+        <div class="sc"><div class="sc-top"><div class="sc-lbl">Weak Signal</div><div class="sc-ico" style="background:var(--blue-bg)">📶</div></div><div class="sc-num" style="color:var(--blue)">3</div><div class="sc-sub">Poor connection</div></div>
+      </div>
+      <div class="card"><div class="ch"><div><div class="ct">📡 All Sensor Devices</div><div class="cd">IoT sensors attached to each bin</div></div></div><div class="cb"><div class="dvs" id="dvStack"></div></div></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="sec" id="section-settings">
+      <div class="bc"><span onclick="nav('overview',null)">Home</span><span class="bc-sep">›</span><span>Settings</span></div>
+      <div class="card" style="max-width:580px">
+        <div class="ch"><div><div class="ct">⚙️ Alert Settings</div><div class="cd">Adjust when you want to receive alerts</div></div></div>
+        <div class="cb">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="sgrp"><label class="slbl">🚨 Send "Overflow" alert when bin reaches (%)</label><div class="rrow"><input type="range" min="50" max="100" value="85" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="rval" style="color:var(--red)">85%</span></div></div>
+            <div class="sgrp"><label class="slbl">⚠️ Send "Getting full" warning at (%)</label><div class="rrow"><input type="range" min="30" max="90" value="65" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="rval" style="color:var(--amber)">65%</span></div></div>
+            <div class="sgrp"><label class="slbl">🐾 Alert for animal activity after how many motion triggers (per hour)?</label><div class="rrow"><input type="range" min="1" max="20" value="5" oninput="this.nextElementSibling.textContent=this.value+' times'"><span class="rval" style="color:var(--blue)">5 times</span></div></div>
+            <div class="sgrp"><label class="slbl">🔋 Alert when sensor battery drops below (Volts)</label><div class="rrow"><input type="range" min="2.5" max="4.0" step="0.1" value="3.2" oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)+'V'"><span class="rval" style="color:var(--green)">3.2V</span></div></div>
+            <button class="btn btn-g" style="width:fit-content" onclick="toast2('success','Settings Saved ✓','Your alert preferences have been updated.')">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+</div>
+
+<!-- BIN MODAL -->
+<div class="ov" id="binMod" onclick="clsOv(event,'binMod')">
+  <div class="mbox"><div class="mhd"><div class="mtit" id="mdTitle">Bin Details</div><button class="mcls" onclick="document.getElementById('binMod').classList.remove('open')">×</button></div><div class="mbody" id="mdBody"></div></div>
+</div>
+
+<!-- ASSIGN MODAL -->
+<div class="ov" id="asgMod" onclick="clsOv(event,'asgMod')">
+  <div class="mbox">
+    <div class="mhd"><div class="mtit">🚛 Assign a Pickup Task</div><button class="mcls" onclick="document.getElementById('asgMod').classList.remove('open')">×</button></div>
+    <div class="mbody">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div><label style="font-size:13px;font-weight:700;color:var(--text2);display:block;margin-bottom:7px">Which area needs pickup?</label><select class="sel" style="width:100%"><option>Zone A (3 bins critical)</option><option>Zone B (2 bins near full)</option><option>Zone C (wet waste)</option><option>All critical bins</option></select></div>
+        <div><label style="font-size:13px;font-weight:700;color:var(--text2);display:block;margin-bottom:7px">Assign to which truck?</label><select class="sel" style="width:100%"><option>🚛 Truck 01 — K. Perera</option><option>🚛 Truck 02 — S. Fernando</option><option>🚛 Truck 03 — M. Rathna</option></select></div>
+        <div><label style="font-size:13px;font-weight:700;color:var(--text2);display:block;margin-bottom:7px">How urgent?</label><select class="sel" style="width:100%"><option>🔴 Right now — Urgent</option><option>🟠 Within 30 minutes</option><option>🟡 Normal schedule</option></select></div>
+        <div><label style="font-size:13px;font-weight:700;color:var(--text2);display:block;margin-bottom:7px">Special instructions?</label><textarea style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 13px;font-size:13px;width:100%;resize:vertical;min-height:70px;font-family:'Plus Jakarta Sans',sans-serif;outline:none" placeholder="e.g. Bin is near the main gate..."></textarea></div>
+        <div class="mbtns"><button class="btn btn-g" style="flex:1" onclick="cfmPickup()">✓ Confirm Assignment</button><button class="btn btn-o" onclick="document.getElementById('asgMod').classList.remove('open')">Cancel</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toa" id="toaBox"></div>
+
+<script>
+const BINS=[
+  {id:'A07',z:'A',f:97,s:'full',m:'Dry',pir:true,bat:3.8,sig:-65,t:'2 min ago'},
+  {id:'A02',z:'A',f:22,s:'low',m:'Dry',pir:false,bat:3.9,sig:-58,t:'3 min ago'},
+  {id:'A05',z:'A',f:61,s:'medium',m:'Moist',pir:false,bat:3.5,sig:-72,t:'3 min ago'},
+  {id:'B09',z:'B',f:82,s:'full',m:'Moist',pir:false,bat:3.7,sig:-68,t:'4 min ago'},
+  {id:'B12',z:'B',f:88,s:'full',m:'Dry',pir:true,bat:3.6,sig:-70,t:'15 min ago'},
+  {id:'B04',z:'B',f:35,s:'low',m:'Dry',pir:false,bat:4.0,sig:-55,t:'5 min ago'},
+  {id:'C03',z:'C',f:71,s:'medium',m:'Wet',pir:false,bat:3.3,sig:-74,t:'8 min ago'},
+  {id:'C06',z:'C',f:58,s:'medium',m:'Moist',pir:false,bat:3.8,sig:-62,t:'6 min ago'},
+  {id:'D05',z:'D',f:45,s:'low',m:'Dry',pir:true,bat:3.9,sig:-60,t:'22 min ago'},
+  {id:'D01',z:'D',f:18,s:'low',m:'Dry',pir:false,bat:3.7,sig:-66,t:'7 min ago'},
+  {id:'E02',z:'E',f:76,s:'medium',m:'Moist',pir:false,bat:2.9,sig:-78,t:'10 min ago'},
+  {id:'E07',z:'E',f:29,s:'low',m:'Dry',pir:false,bat:3.6,sig:-71,t:'9 min ago'},
+];
+const ZONES={A:{avg:60,crit:1,total:3},B:{avg:68,crit:2,total:3},C:{avg:65,crit:0,total:2},D:{avg:32,crit:0,total:2},E:{avg:53,crit:0,total:2}};
+let overviewFilters={zone:'all',status:'all',moist:'all',day:'all',week:'this',time:'all'};
+const GLOBAL_RESET_KEY='smartbin_global_filter_reset_token';
+const PAGE_RESET_KEY='smartbin_last_reset_dashboard';
+
+const TITLES={overview:'Dashboard Home',map:'Campus Map',bins:'All Bins',alerts:'Alerts',analytics:'Reports & Analytics',devices:'Sensors & Devices',settings:'Settings'};
+function nav(id,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.nl').forEach(n=>n.classList.remove('on'));
+  document.getElementById('section-'+id).classList.add('on');
+  document.getElementById('ph').textContent=TITLES[id]||id;
+  if(el)el.classList.add('on');
+  else{const f=[...document.querySelectorAll('.nl')].find(n=>n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"));if(f)f.classList.add('on');}
+  if(id==='analytics')initAnalytics();
+  if(id==='devices')renderDevs();
+  if(id==='map')initMap();
+  if(id==='alerts')initAlertHist();
+}
+
+function spk(id,vals,col){const el=document.getElementById(id);if(!el)return;const mx=Math.max(...vals);el.innerHTML=vals.map(v=>`<div class="spkb" style="height:${Math.max(3,(v/mx*100))}%;background:${col};opacity:.6"></div>`).join('');}
+
+function renderZones(){
+  const g=document.getElementById('szCards');if(!g)return;
+  g.innerHTML=Object.entries(ZONES).map(([z,d])=>{
+    const c=d.avg>=80?'var(--red)':d.avg>=55?'var(--amber)':'var(--green)';
+    const cls=d.avg>=80?'tf':d.avg>=55?'tm':'tl';
+    const lbl=d.avg>=80?'Overflowing':d.avg>=55?'Getting full':'All good';
+    return `<div class="szc" onclick="showZoneDrilldown('${z}')"><div class="szt"><div class="szn">📍 Zone ${z}</div><span class="tag ${cls}">${lbl}</span></div><div class="sft"><div class="sfb" style="width:${d.avg}%;background:${c}"></div></div><div class="szi"><span>🗑️ ${d.total} bins</span><span>📊 ${d.avg}% avg</span><span>🚨 ${d.crit} critical</span></div></div>`;
+  }).join('');
+}
+
+function getFilteredBins(){
+  return BINS.filter(b=>{
+    const zOk=overviewFilters.zone==='all'||b.z===overviewFilters.zone;
+    const sOk=overviewFilters.status==='all'||b.s===overviewFilters.status;
+    const mOk=overviewFilters.moist==='all'||b.m===overviewFilters.moist;
+    return zOk&&sOk&&mOk;
+  });
+}
+
+function updateOverviewKpis(){
+  const rows=getFilteredBins();
+  const dayFactor=overviewFilters.day==='weekend'?0.85:overviewFilters.day==='weekday'?1.08:1;
+  const weekFactor=overviewFilters.week==='last'?0.93:1;
+  const timeFactor=overviewFilters.time==='morning'?0.92:overviewFilters.time==='afternoon'?1.1:overviewFilters.time==='evening'?1.05:overviewFilters.time==='night'?0.88:1;
+  const scopeFactor=dayFactor*weekFactor*timeFactor;
+  const total=Math.max(0,Math.round(rows.length*scopeFactor));
+  const almostFull=Math.max(0,Math.round(rows.filter(b=>b.f>=85).length*scopeFactor));
+  const avgBase=rows.length?Math.round(rows.reduce((s,b)=>s+b.f,0)/rows.length):0;
+  const avg=Math.min(100,Math.max(0,Math.round(avgBase*timeFactor)));
+  const motion=Math.max(0,Math.round(rows.filter(b=>b.pir).length*scopeFactor));
+  document.getElementById('kpiTotalBins').textContent=String(total);
+  document.getElementById('kpiOnlineOffline').textContent=`${Math.max(0,total-1)} online · ${Math.min(1,total)} offline`;
+  document.getElementById('kpiAlmostFull').textContent=String(almostFull);
+  document.getElementById('kpiUrgencySub').innerHTML=almostFull?'<span class="up-bad">Needs action</span> in filtered scope':'No critical bins in scope';
+  document.getElementById('kpiAvgFullness').textContent=`${avg}%`;
+  document.getElementById('kpiAvgSub').textContent=`${overviewFilters.week==='last'?'Last':'This'} week · ${overviewFilters.day} · ${overviewFilters.time}`;
+  document.getElementById('kpiMotion').textContent=String(motion);
+}
+
+function applyOverviewFilters(){
+  overviewFilters={
+    zone:document.getElementById('ovZoneFilter').value,
+    status:document.getElementById('ovStatusFilter').value,
+    moist:document.getElementById('ovMoistFilter').value,
+    day:document.getElementById('ovDayFilter').value,
+    week:document.getElementById('ovWeekFilter').value,
+    time:document.getElementById('ovTimeFilter').value
+  };
+  const rows=getFilteredBins();
+  renderBins(rows);
+  updateOverviewKpis();
+  if(fCI){
+    const delta=overviewFilters.zone==='all'?0:({A:5,B:9,C:-4,D:-8,E:2}[overviewFilters.zone]||0);
+    const mAdj=overviewFilters.moist==='Wet'?9:overviewFilters.moist==='Moist'?4:overviewFilters.moist==='Dry'?-5:0;
+    const tAdj=overviewFilters.time==='morning'?-4:overviewFilters.time==='afternoon'?6:overviewFilters.time==='evening'?3:overviewFilters.time==='night'?-6:0;
+    const wAdj=overviewFilters.week==='last'?-3:0;
+    fCI.data.datasets[0].data=FV.map(v=>Math.min(100,Math.max(0,v+delta+mAdj+tAdj+wAdj+(Math.random()*3-1.5))));
+    fCI.update();
+  }
+  toast2('info','Filters applied',`Scope: ${overviewFilters.zone.toUpperCase()} · ${overviewFilters.day} · ${overviewFilters.week} week · ${overviewFilters.time}`);
+}
+
+function resetOverviewFilters(){
+  document.getElementById('ovZoneFilter').value='all';
+  document.getElementById('ovStatusFilter').value='all';
+  document.getElementById('ovMoistFilter').value='all';
+  document.getElementById('ovDayFilter').value='all';
+  document.getElementById('ovWeekFilter').value='this';
+  document.getElementById('ovTimeFilter').value='all';
+  overviewFilters={zone:'all',status:'all',moist:'all',day:'all',week:'this',time:'all'};
+  renderBins(BINS);
+  updateOverviewKpis();
+  if(fCI){fCI.data.datasets[0].data=[...FV];fCI.update();}
+}
+
+function resetAllFiltersGlobal(){
+  const token=String(Date.now());
+  localStorage.setItem(GLOBAL_RESET_KEY,token);
+  localStorage.setItem(PAGE_RESET_KEY,token);
+  resetOverviewFilters();
+  toast2('success','All filters reset','Defaults applied across dashboard pages.');
+}
+
+function applyPendingGlobalReset(){
+  const token=localStorage.getItem(GLOBAL_RESET_KEY);
+  if(!token)return;
+  const seen=localStorage.getItem(PAGE_RESET_KEY);
+  if(seen===token)return;
+  localStorage.setItem(PAGE_RESET_KEY,token);
+  resetOverviewFilters();
+}
+
+function showZoneDrilldown(zone){
+  const wrap=document.getElementById('zoneDrill');
+  const list=BINS.filter(b=>b.z===zone);
+  const avg=list.length?Math.round(list.reduce((s,b)=>s+b.f,0)/list.length):0;
+  const wet=list.filter(b=>b.m==='Wet').length;
+  const critical=list.filter(b=>b.f>=85).length;
+  const motion=list.filter(b=>b.pir).length;
+  document.getElementById('zdTitle').textContent=`Zone ${zone} Drill-down`;
+  document.getElementById('zdSubtitle').textContent=`${list.length} bins in zone ${zone} · click Open Bin Table for full list`;
+  document.getElementById('zdGrid').innerHTML=`
+    <div class="zd-box"><div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase">Average Fill</div><div style="font-family:'Nunito',sans-serif;font-size:26px;font-weight:800;color:var(--amber)">${avg}%</div></div>
+    <div class="zd-box"><div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase">Critical Bins</div><div style="font-family:'Nunito',sans-serif;font-size:26px;font-weight:800;color:var(--red)">${critical}</div></div>
+    <div class="zd-box"><div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase">Wet + Motion</div><div style="font-family:'Nunito',sans-serif;font-size:26px;font-weight:800;color:var(--blue)">${wet + motion}</div></div>
+  `;
+  wrap.style.display='block';
+}
+
+function renderBins(data){
+  const tb=document.getElementById('btbody');if(!tb)return;
+  tb.innerHTML=data.map(b=>{
+    const c=b.f>=85?'var(--red)':b.f>=60?'var(--amber)':'var(--green)';
+    const sc=b.f>=85?'tf':b.f>=60?'tm':'tl';
+    const sl=b.f>=85?'Overflowing':b.f>=60?'Getting full':'All good';
+    const mc=b.m==='Wet'?'twet':b.m==='Moist'?'tmo':'tdry';
+    const bp=Math.round(((b.bat-2.5)/1.8)*100);
+    const bc=b.bat<3.0?'var(--red)':b.bat<3.4?'var(--amber)':'var(--green)';
+    return `<tr onclick="showBin('${b.id}')"><td><strong style="font-family:'Nunito',sans-serif;font-weight:800">BIN-${b.id}</strong></td><td>Zone ${b.z}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="fb"><div class="ff" style="width:${b.f}%;background:${c}"></div></div><span style="font-weight:700;color:${c};font-size:12px">${b.f}%</span></div></td><td><span class="tag ${sc}">${sl}</span></td><td><span class="tag ${mc}">${b.m}</span></td><td><span class="tag ${b.pir?'ton':'toff'}">${b.pir?'Detected':'None'}</span></td><td><div style="display:flex;align-items:center;gap:7px"><div class="batbar"><div class="batfill" style="width:${bp}%;background:${bc}"></div></div><span style="font-size:11px;font-weight:700;color:${bc}">${b.bat}V</span></div></td><td style="color:var(--text3);font-size:12px;font-weight:500">${b.t}</td><td><button class="btn btn-o" style="padding:4px 11px;font-size:12px" onclick="event.stopPropagation();showBin('${b.id}')">View</button></td></tr>`;
+  }).join('');
+}
+function filterT(q){renderBins(BINS.filter(b=>b.id.toLowerCase().includes(q.toLowerCase())||b.z.toLowerCase().includes(q.toLowerCase())));}
+function sortT(by){let s=[...BINS];if(by==='fd')s.sort((a,b)=>b.f-a.f);else if(by==='fa')s.sort((a,b)=>a.f-b.f);else s.sort((a,b)=>a.id.localeCompare(b.id));renderBins(s);}
+
+function showBin(id){
+  const b=BINS.find(x=>x.id===id);if(!b)return;
+  const c=b.f>=85?'var(--red)':b.f>=60?'var(--amber)':'var(--green)';
+  document.getElementById('mdTitle').textContent='🗑️ Bin '+b.id+' — Zone '+b.z;
+  document.getElementById('mdBody').innerHTML=`<div class="dl"><span class="dk">How full is it?</span><span class="dv" style="color:${c}">${b.f}%</span></div><div class="dl"><span class="dk">Moisture inside</span><span class="dv">${b.m}</span></div><div class="dl"><span class="dk">Motion detected?</span><span class="dv">${b.pir?'Yes — something nearby':'No activity'}</span></div><div class="dl"><span class="dk">Sensor battery</span><span class="dv" style="color:${b.bat<3.2?'var(--red)':'var(--green)'}">${b.bat}V ${b.bat<3.2?'⚠️ Low':''}</span></div><div class="dl"><span class="dk">Signal strength</span><span class="dv">${b.sig} dBm</span></div><div class="dl"><span class="dk">Last update</span><span class="dv">${b.t}</span></div><div class="mbtns"><button class="btn btn-g" style="flex:1" onclick="openAssign();document.getElementById('binMod').classList.remove('open')">🚛 Assign Pickup Truck</button><button class="btn btn-o" onclick="document.getElementById('binMod').classList.remove('open')">Close</button></div>`;
+  document.getElementById('binMod').classList.add('open');
+}
+function clsOv(e,id){if(e.target.classList.contains('ov'))document.getElementById(id).classList.remove('open');}
+function openAssign(){document.getElementById('asgMod').classList.add('open');}
+function cfmPickup(){document.getElementById('asgMod').classList.remove('open');toast2('success','Pickup Assigned! 🚛','Truck 01 is on the way to Zone A. ETA: 12 minutes.');document.getElementById('abadge').textContent='2';}
+function chRole(r){const n={supervisor:'Route Supervisor',health:'Health Officer',maintenance:'Maintenance Engineer',manager:'Campus Manager'};toast2('info','Role Changed','Viewing as: '+n[r]);}
+
+function toast2(type,title,msg){
+  const ic={success:'✅',info:'ℹ️',warning:'⚠️',danger:'🚨'};
+  const bd={success:'var(--green)',info:'var(--blue)',warning:'var(--amber)',danger:'var(--red)'};
+  const t=document.createElement('div');t.className='toast';
+  t.style.borderLeft='4px solid '+(bd[type]||'var(--blue)');
+  t.innerHTML=`<span class="tico">${ic[type]||'ℹ️'}</span><div><div class="tttl">${title}</div><div class="tmsg">${msg}</div></div>`;
+  document.getElementById('toaBox').appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';setTimeout(()=>t.remove(),350);},3500);
+}
+
+// CHART BASE
+const bOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',titleColor:'#1a2035',bodyColor:'#5a6480',borderColor:'#e8ecf4',borderWidth:1,padding:10,boxPadding:4,cornerRadius:8}},scales:{x:{grid:{color:'rgba(232,236,244,.8)'},ticks:{color:'#9aa3bc',font:{size:11}}},y:{grid:{color:'rgba(232,236,244,.8)'},ticks:{color:'#9aa3bc',font:{size:11}}}}};
+const HRS=['12am','2am','4am','6am','8am','10am','12pm','2pm','4pm','6pm','8pm','10pm','12am'];
+const FV=[12,10,9,15,24,40,58,72,84,69,75,81,87];
+let fCI,dCI,zbCI,ahCI,zlCI,mdCI,mwCI,ccCI;
+
+function initOverview(){
+  const c1=document.getElementById('fillChart');
+  if(c1&&!fCI){fCI=new Chart(c1,{type:'line',data:{labels:HRS,datasets:[{data:FV,borderColor:'#22c88a',backgroundColor:'rgba(34,200,138,.08)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#22c88a',borderWidth:2.5}]},options:{...bOpts,scales:{...bOpts.scales,y:{...bOpts.scales.y,min:0,max:100,ticks:{...bOpts.scales.y.ticks,callback:v=>v+'%'}}}}});}
+  const c2=document.getElementById('donutChart');
+  if(c2&&!dCI){dCI=new Chart(c2,{type:'doughnut',data:{labels:['Overflowing','Getting full','All good','Offline'],datasets:[{data:[7,23,18,4],backgroundColor:['#ef4444','#f59e0b','#22c88a','#cbd5e1'],borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:bOpts.plugins.tooltip},cutout:'68%'}});}
+}
+function updFill(z){if(!fCI)return;const off={all:0,A:5,B:10,C:-6}[z]||0;fCI.data.datasets[0].data=FV.map(v=>Math.min(100,Math.max(0,v+off+(Math.random()*4-2))));fCI.update();}
+
+function initMap(){
+  const c=document.getElementById('zoneBar');
+  if(c&&!zbCI){zbCI=new Chart(c,{type:'bar',data:{labels:['Zone A','Zone B','Zone C','Zone D','Zone E'],datasets:[{data:[60,68,65,32,53],backgroundColor:['#ef4444','#f59e0b','#22c88a','#3b82f6','#8b5cf6'],borderRadius:6,borderWidth:0}]},options:{...bOpts,scales:{...bOpts.scales,y:{...bOpts.scales.y,max:100,ticks:{...bOpts.scales.y.ticks,callback:v=>v+'%'}}}}});}
+}
+
+function initAlertHist(){
+  const c=document.getElementById('alertHist');
+  if(c&&!ahCI){ahCI=new Chart(c,{type:'bar',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Critical',data:[2,3,1,4,3,2,3],backgroundColor:'#ef4444',borderRadius:4},{label:'Warnings',data:[4,3,5,3,6,4,7],backgroundColor:'#f59e0b',borderRadius:4}]},options:{...bOpts,plugins:{...bOpts.plugins,legend:{display:true,labels:{color:'#5a6480',boxWidth:10,font:{size:11}}}},scales:{...bOpts.scales,x:{...bOpts.scales.x,stacked:true},y:{...bOpts.scales.y,stacked:true}}}});}
+}
+
+function initAnalytics(){
+  const c1=document.getElementById('zlineChart');
+  if(c1&&!zlCI){const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];zlCI=new Chart(c1,{type:'line',data:{labels:days,datasets:[{label:'Zone A',data:[55,60,58,70,65,75,80],borderColor:'#ef4444',tension:.4,pointRadius:3,borderWidth:2,fill:false},{label:'Zone B',data:[50,55,60,62,68,72,78],borderColor:'#f59e0b',tension:.4,pointRadius:3,borderWidth:2,fill:false},{label:'Zone C',data:[40,45,50,48,55,60,65],borderColor:'#22c88a',tension:.4,pointRadius:3,borderWidth:2,fill:false},{label:'Zone D',data:[20,25,22,30,28,32,35],borderColor:'#3b82f6',tension:.4,pointRadius:3,borderWidth:2,fill:false}]},options:{...bOpts,plugins:{...bOpts.plugins,legend:{display:true,labels:{color:'#5a6480',boxWidth:10,font:{size:11}}}},scales:{...bOpts.scales,y:{...bOpts.scales.y,max:100,ticks:{...bOpts.scales.y.ticks,callback:v=>v+'%'}}}}});}
+  const c2=document.getElementById('moistDonut');
+  if(c2&&!mdCI){mdCI=new Chart(c2,{type:'doughnut',data:{labels:['Dry','Moist','Wet'],datasets:[{data:[28,18,6],backgroundColor:['#3b82f6','#f59e0b','#ef4444'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:'#5a6480',boxWidth:10,font:{size:11}}},tooltip:bOpts.plugins.tooltip},cutout:'60%'}});}
+}
+
+function switchTab(tab,el){
+  document.querySelectorAll('.atab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
+  ['fill','heatmap','moisture','collections'].forEach(t=>{const x=document.getElementById('tab-'+t);if(x)x.style.display=t===tab?'block':'none';});
+  if(tab==='heatmap')buildHeatmap();
+  if(tab==='moisture'){const c=document.getElementById('moistWeek');if(c&&!mwCI){mwCI=new Chart(c,{type:'bar',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Dry',data:[30,28,25,32,27,22,20],backgroundColor:'#3b82f6',borderRadius:4},{label:'Moist',data:[12,14,16,10,15,18,20],backgroundColor:'#f59e0b',borderRadius:4},{label:'Wet',data:[3,5,4,6,5,7,8],backgroundColor:'#ef4444',borderRadius:4}]},options:{...bOpts,plugins:{...bOpts.plugins,legend:{display:true,labels:{color:'#5a6480',boxWidth:10,font:{size:11}}}},scales:{...bOpts.scales,x:{...bOpts.scales.x,stacked:true},y:{...bOpts.scales.y,stacked:true}}}});}}
+  if(tab==='collections'){const c=document.getElementById('collectChart');if(c&&!ccCI){ccCI=new Chart(c,{type:'bar',data:{labels:Array.from({length:13},(_,i)=>'Mar '+(i+1)),datasets:[{data:[8,6,9,7,11,8,10,12,9,7,8,10,6],backgroundColor:'#22c88a',borderRadius:5,borderWidth:0}]},options:{...bOpts}});}}
+}
+
+function buildHeatmap(){
+  const box=document.getElementById('hmbox');if(!box)return;
+  const hrs=['12am','2am','4am','6am','8am','10am','12pm','2pm','4pm','6pm','8pm','10pm'];
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let h=`<div class="hmg" style="grid-template-columns:52px repeat(7,1fr)"><div class="hmc hmhdr"></div>`;
+  days.forEach(d=>h+=`<div class="hmc hmhdr">${d}</div>`);
+  hrs.forEach(hr=>{h+=`<div class="hmc hmlbl">${hr}</div>`;days.forEach(()=>{const v=Math.round(Math.random()*100);const a=v/100;const bg=v>=80?`rgba(239,68,68,${a})`:v>=55?`rgba(245,158,11,${a})`:`rgba(34,200,138,${a})`;h+=`<div class="hmc" style="background:${bg}" title="${v}% full at this time"></div>`;});});
+  h+=`</div><div style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;font-weight:600;color:var(--text3)"><span>Empty</span>`;
+  for(let i=0;i<=10;i++){const v=i*10;const a=v/100;const bg=v>=80?`rgba(239,68,68,${a})`:v>=55?`rgba(245,158,11,${a})`:`rgba(34,200,138,${a})`;h+=`<div style="width:22px;height:16px;background:${bg};border-radius:4px"></div>`;}
+  h+=`<span>Full</span></div>`;
+  box.innerHTML=h;
+}
+
+function renderDevs(){
+  const s=document.getElementById('dvStack');if(!s)return;
+  s.innerHTML=BINS.map(b=>{const bp=Math.round(((b.bat-2.5)/1.8)*100);const bc=b.bat<3.0?'var(--red)':b.bat<3.4?'var(--amber)':'var(--green)';const bl=b.bat<3.0?'Low battery':b.bat<3.4?'Okay':'Good';const sc=b.sig>-65?'var(--green)':b.sig>-75?'var(--amber)':'var(--red)';const sl=b.sig>-65?'Strong':b.sig>-75?'Medium':'Weak';return `<div class="dvr"><div class="dvid">BIN-${b.id}</div><div class="dvi"><div class="dvn">Zone ${b.z} · Distance + Moisture + Motion Sensor</div><div class="dvs2">Signal: <span style="color:${sc};font-weight:700">${sl} (${b.sig} dBm)</span> · Updated ${b.t}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="batbar" style="width:64px"><div class="batfill" style="width:${bp}%;background:${bc}"></div></div><span style="font-size:12px;font-weight:700;color:${bc}">${b.bat}V</span></div><span class="tag ${b.bat<3.0?'tf':b.bat<3.4?'tm':'tl'}">${bl}</span></div>`;}).join('');
+}
+
+function simLive(){BINS.forEach(b=>{b.f=Math.min(100,Math.max(0,Math.round(b.f+(Math.random()-.35)*2)));b.s=b.f>=85?'full':b.f>=60?'medium':'low';});if(Math.random()<.05){const m=[['warning','Bin A03 is 81% full','Consider scheduling a pickup soon.'],['warning','Moisture detected at Bin B07','Wet waste has been detected.']];const r=m[Math.floor(Math.random()*m.length)];toast2(r[0],r[1],r[2]);}}
+
+window.addEventListener('load',()=>{
+  renderZones();renderBins(BINS);initOverview();
+  applyPendingGlobalReset();
+  updateOverviewKpis();
+  spk('sp1',[50,51,50,52,51,52,52],'#22c88a');
+  spk('sp2',[3,4,3,5,6,7,7],'#ef4444');
+  spk('sp3',[55,58,60,62,65,67,68],'#f59e0b');
+  spk('sp4',[8,10,9,12,11,13,14],'#3b82f6');
+  setInterval(simLive,5000);
+  setInterval(()=>{if(fCI){fCI.data.datasets[0].data=fCI.data.datasets[0].data.map(v=>Math.min(100,Math.max(0,v+(Math.random()-.4))));fCI.update('none');}},3000);
+});
+</script>
+</body>
+</html>

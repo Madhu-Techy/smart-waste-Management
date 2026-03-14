@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Portal — SmartBin SLIIT</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fb;--white:#fff;--border:#e8ecf4;--border2:#d5daea;
+  --text:#1a2035;--text2:#5a6480;--text3:#9aa3bc;
+  --green:#22c88a;--gbg:#eafaf3;--gbd:#b6ecd8;--gdk:#0e9e6a;
+  --amber:#f59e0b;--abg:#fff8e6;--abd:#fde68a;--adk:#b45309;
+  --red:#ef4444;--rbg:#fff1f1;--rbd:#fecaca;--rdk:#b91c1c;
+  --blue:#3b82f6;--bbg:#eff6ff;--bbd:#bfdbfe;--bdk:#1d4ed8;
+  --purple:#8b5cf6;--pbg:#f5f3ff;--pbd:#ddd6fe;--pdk:#6d28d9;
+  --orange:#f97316;--obg:#fff7ed;--obd:#fed7aa;--odk:#c2410c;
+  --r:12px;--rlg:16px;
+  --sh:0 1px 4px rgba(30,40,80,.07),0 0 0 1px var(--border);
+  --shh:0 6px 22px rgba(30,40,80,.11),0 0 0 1px var(--border2);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+
+/* ── TOPBAR ── */
+.top{background:var(--white);border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:200}
+.logo-row{display:flex;align-items:center;gap:10px}
+.logo-ring{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#22c88a,#16a96e);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.ph{font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--text)}
+.ph-sub{font-size:11px;color:var(--text3);font-weight:500}
+.tright{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{padding:8px 16px;border-radius:10px;border:none;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap}
+.btn-g{background:var(--green);color:#fff}.btn-g:hover{background:#18a974;transform:translateY(-1px)}
+.btn-r{background:var(--red);color:#fff}.btn-r:hover{background:#dc2626}
+.btn-o{background:var(--white);color:var(--text2);border:1px solid var(--border)}.btn-o:hover{background:var(--bg);color:var(--text);border-color:var(--border2)}
+.btn-pu{background:var(--purple);color:#fff}.btn-pu:hover{background:#7c3aed}
+
+/* ── EMERGENCY BANNER (sticky under topbar) ── */
+.emergency-bar{background:linear-gradient(135deg,#fef2f2,#fff1f1);border-bottom:2px solid #fca5a5;padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.emg-text{flex:1;font-size:13px;font-weight:600;color:#b91c1c}
+.emg-text strong{font-family:'Nunito',sans-serif;font-size:14px;font-weight:800}
+
+/* ── PAGE TABS ── */
+.tab-nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;overflow-x:auto}
+.tnav{padding:13px 18px;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:7px}
+.tnav:hover{color:var(--text);background:var(--bg)}
+.tnav.on{color:var(--green);border-bottom-color:var(--green);font-weight:700}
+.tnav .tico{font-size:16px}
+
+/* ── CONTENT ── */
+.page-wrap{padding:24px;max-width:1200px;margin:0 auto}
+.sec{display:none}.sec.on{display:block}
+
+/* ── CARDS ── */
+.card{background:var(--white);border-radius:var(--rlg);box-shadow:var(--sh);overflow:hidden;margin-bottom:16px}
+.ch{padding:16px 20px 13px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.ct{font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--text)}
+.cd{font-size:12px;color:var(--text3);font-weight:500;margin-top:2px}
+.cb{padding:20px 22px}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+
+/* ── FORM ELEMENTS ── */
+.form-group{margin-bottom:18px}
+.flbl{display:block;font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px}
+.flbl .req{color:var(--red);margin-left:2px}
+.finput,.fsel,.ftextarea{width:100%;background:var(--bg);border:1.5px solid var(--border);color:var(--text);border-radius:10px;padding:11px 14px;font-size:13.5px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:border-color .15s,box-shadow .15s;font-weight:500}
+.finput:focus,.fsel:focus,.ftextarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,200,138,.13)}
+.fsel{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239aa3bc' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:14px;padding-right:36px}
+.ftextarea{resize:vertical;min-height:100px;line-height:1.6}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* Issue type chips */
+.issue-chips{display:flex;gap:8px;flex-wrap:wrap}
+.ic{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;transition:all .15s;font-size:13px;font-weight:600;color:var(--text2)}
+.ic:hover{border-color:var(--border2);background:var(--bg)}
+.ic.on{border-color:var(--green);background:var(--gbg);color:var(--gdk)}
+.ic.on.urgent{border-color:var(--red);background:var(--rbg);color:var(--rdk)}
+.ic-ico{font-size:18px}
+
+/* Photo upload */
+.photo-upload{border:2px dashed var(--border2);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.photo-upload:hover{border-color:var(--green);background:var(--gbg)}
+.photo-upload.has-file{border-color:var(--green);background:var(--gbg);border-style:solid}
+.photo-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.photo-thumb{width:70px;height:70px;border-radius:10px;object-fit:cover;border:2px solid var(--border);position:relative}
+
+/* Submit area */
+.submit-row{display:flex;align-items:center;gap:12px;padding-top:8px;border-top:1px solid var(--border)}
+.form-note{font-size:12px;color:var(--text3);font-weight:500}
+
+/* ── MAP SECTION ── */
+.map-area{background:#eef2f8;border-radius:var(--r);position:relative;overflow:hidden;border:1px solid var(--border);cursor:crosshair}
+.map-grid-bg{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:50px 50px;opacity:.5}
+.map-buildings{position:absolute;inset:0}
+.map-bin{position:absolute;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;border:3px solid rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.15);transition:transform .2s;z-index:5}
+.map-bin:hover,.map-bin.selected{transform:scale(1.25);box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:10}
+.map-bin.selected{border-color:#1a2035;outline:3px solid #1a2035;outline-offset:2px}
+.bin-ok{background:var(--green)}.bin-med{background:var(--amber)}.bin-full{background:var(--red)}
+.map-label{position:absolute;background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:var(--text2);pointer-events:none}
+.map-pin{position:absolute;width:28px;height:34px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:default;z-index:15;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));animation:pin-drop .3s ease}
+@keyframes pin-drop{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.map-crosshair-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(26,32,53,.75);color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;pointer-events:none}
+.selected-loc-bar{padding:10px 14px;background:var(--gbg);border-top:1px solid var(--gbd);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--gdk)}
+
+/* ── MAP LEGEND ── */
+.map-leg{display:flex;gap:14px;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-top:1px solid var(--border)}
+.mleg-row{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text2)}
+.mleg-dot{width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.8)}
+
+/* ── COMPLAINT TABLE ── */
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{border-bottom:2px solid var(--border)}
+th{padding:11px 14px;text-align:left;color:var(--text3);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text2)}
+tr:last-child td{border-bottom:none}
+tbody tr{cursor:pointer;transition:background .12s}
+tbody tr:hover td{background:var(--bg);color:var(--text)}
+
+.sbadge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.sb-sub{background:var(--bbg);color:var(--bdk);border:1px solid var(--bbd)}
+.sb-prog{background:var(--abg);color:var(--adk);border:1px solid var(--abd)}
+.sb-done{background:var(--gbg);color:var(--gdk);border:1px solid var(--gbd)}
+.sb-rej{background:var(--rbg);color:var(--rdk);border:1px solid var(--rbd)}
+
+.itag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.it-ov{background:var(--rbg);color:var(--rdk)}
+.it-sm{background:var(--abg);color:var(--adk)}
+.it-dm{background:var(--pbg);color:var(--pdk)}
+.it-ww{background:var(--bbg);color:var(--bdk)}
+.it-ot{background:var(--bg);color:var(--text3)}
+
+/* Track progress bar */
+.track-steps{display:flex;align-items:center;gap:0;margin:16px 0}
+.tstep{display:flex;flex-direction:column;align-items:center;flex:1;position:relative}
+.tstep:not(:last-child)::after{content:'';position:absolute;top:16px;left:50%;width:100%;height:3px;background:var(--border);z-index:0}
+.tstep.done:not(:last-child)::after{background:var(--green)}
+.tstep.prog:not(:last-child)::after{background:linear-gradient(90deg,var(--green) 50%,var(--border) 50%)}
+.tstep-dot{width:32px;height:32px;border-radius:50%;border:3px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;font-size:14px;z-index:1;transition:all .3s}
+.tstep.done .tstep-dot{border-color:var(--green);background:var(--green);color:#fff}
+.tstep.prog .tstep-dot{border-color:var(--amber);background:var(--amber);color:#fff;animation:pulse-step 1.5s ease-in-out infinite}
+@keyframes pulse-step{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}50%{box-shadow:0 0 0 8px rgba(245,158,11,0)}}
+.tstep-lbl{font-size:11px;font-weight:700;color:var(--text3);margin-top:6px;text-align:center}
+.tstep.done .tstep-lbl{color:var(--gdk)}
+.tstep.prog .tstep-lbl{color:var(--adk)}
+
+/* ── STAR RATING ── */
+.stars-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding:12px 0}
+.stars-row{display:flex;gap:10px}
+.star{font-size:44px;cursor:pointer;color:#e2e8f0;transition:all .15s;line-height:1}
+.star:hover,.star.lit{color:#f59e0b;transform:scale(1.12)}
+.star-labels{display:flex;justify-content:space-between;width:100%;max-width:300px;font-size:11px;font-weight:700;color:var(--text3)}
+.rating-feedback{text-align:center;font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;min-height:28px;transition:all .2s}
+.aspect-ratings{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.aspect-row{padding:10px 14px;background:var(--bg);border-radius:10px;border:1px solid var(--border)}
+.aspect-name{font-size:12.5px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.aspect-stars{display:flex;gap:4px}
+.asp-star{font-size:20px;cursor:pointer;color:#e2e8f0;transition:color .12s}
+.asp-star:hover,.asp-star.lit{color:#f59e0b}
+
+/* ── SUGGESTION BOX ── */
+.suggestion-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.sug-chip{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--white);font-size:12.5px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .15s}
+.sug-chip:hover{border-color:var(--purple);color:var(--pdk);background:var(--pbg)}
+.sug-chip.on{border-color:var(--purple);background:var(--pbg);color:var(--pdk)}
+.char-count{font-size:11px;color:var(--text3);font-weight:500;text-align:right;margin-top:5px}
+
+/* ── STUDENT DASHBOARD STATS ── */
+.score-ring-wrap{display:flex;flex-direction:column;align-items:center;padding:16px}
+.score-circle{width:120px;height:120px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:8px solid;margin-bottom:10px}
+.score-num{font-family:'Nunito',sans-serif;font-size:36px;font-weight:900;line-height:1}
+.score-unit{font-size:11px;font-weight:600;color:var(--text3)}
+
+/* Donut legend */
+.donut-legend{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.dl-row{display:flex;align-items:center;justify-content:space-between;font-size:12.5px}
+.dl-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0;margin-right:7px}
+.dl-label{flex:1;font-weight:500;color:var(--text2)}
+.dl-val{font-weight:700;color:var(--text)}
+
+/* ── EMERGENCY MODAL ── */
+.ov{position:fixed;inset:0;background:rgba(20,30,60,.4);backdrop-filter:blur(6px);z-index:1000;display:none;align-items:center;justify-content:center}
+.ov.open{display:flex}
+.mbox{background:var(--white);border-radius:20px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(20,30,80,.22);animation:popIn .2s ease}
+@keyframes popIn{from{transform:scale(.93) translateY(14px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.mhd{padding:20px 22px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.mt{font-family:'Nunito',sans-serif;font-weight:800;font-size:16px}
+.mcls{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.mcls:hover{background:var(--rbg);color:var(--red);border-color:var(--rbd)}
+.mbody{padding:20px 22px}
+
+/* Success overlay */
+.success-overlay{position:fixed;inset:0;background:rgba(20,30,60,.5);backdrop-filter:blur(8px);z-index:2000;display:none;align-items:center;justify-content:center}
+.success-overlay.open{display:flex}
+.success-box{background:var(--white);border-radius:24px;padding:40px;text-align:center;max-width:420px;width:90%;box-shadow:0 24px 60px rgba(20,30,80,.22);animation:popIn .25s ease}
+.success-ico{font-size:64px;margin-bottom:14px}
+.success-title{font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:var(--text);margin-bottom:8px}
+.success-msg{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:20px}
+.cid-pill{display:inline-block;background:var(--gbg);border:1.5px solid var(--gbd);color:var(--gdk);font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;padding:6px 20px;border-radius:20px;margin-bottom:20px}
+
+/* ── TOAST ── */
+.toa{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--white);border-radius:14px;padding:13px 16px;min-width:290px;max-width:360px;display:flex;align-items:flex-start;gap:11px;animation:sIn .3s ease;box-shadow:0 8px 30px rgba(20,30,80,.12),0 0 0 1px var(--border)}
+@keyframes sIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+.tttl{font-size:13px;font-weight:700;color:var(--text)}
+.tmsg{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:860px){.g2,.g3,.g4,.form-row{grid-template-columns:1fr}.tright{gap:6px}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="top">
+  <div class="logo-row">
+    <div class="logo-ring">🌿</div>
+    <div>
+      <div class="ph">SmartBin — Student Portal</div>
+      <div class="ph-sub">SLIIT Campus · Report · Track · Rate</div>
+    </div>
+  </div>
+  <div class="tright">
+    <button class="btn btn-r" onclick="openEmergency()">🚨 Report Emergency</button>
+    <a href="smart-waste-dashboard (1).html" class="btn btn-o">← Staff Dashboard</a>
+  </div>
+</div>
+
+<!-- EMERGENCY BANNER -->
+<div class="emergency-bar">
+  <span style="font-size:20px">🚨</span>
+  <div class="emg-text"><strong>See a serious problem?</strong> Use the red button above to send an instant alert to the facilities team.</div>
+  <button class="btn btn-r" style="padding:6px 14px;font-size:12px" onclick="openEmergency()">Report Now</button>
+</div>
+
+<!-- PAGE TABS -->
+<div class="tab-nav">
+  <div class="tnav on" onclick="goTab('report',this)"><span class="tico">📝</span>Report a Problem</div>
+  <div class="tnav" onclick="goTab('track',this)"><span class="tico">🔍</span>Track My Complaints</div>
+  <div class="tnav" onclick="goTab('rate',this)"><span class="tico">⭐</span>Rate Cleanliness</div>
+  <div class="tnav" onclick="goTab('suggest',this)"><span class="tico">💡</span>Suggestions</div>
+  <div class="tnav" onclick="goTab('overview',this)"><span class="tico">📊</span>Campus Overview</div>
+</div>
+
+<div class="page-wrap">
+
+<!-- ══════════════════════════════════════════
+     TAB 1: REPORT A PROBLEM
+══════════════════════════════════════════ -->
+<div class="sec on" id="tab-report">
+  <div class="g2">
+
+    <!-- FORM CARD -->
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">📝 Report a Bin Problem</div><div class="cd">Takes less than 60 seconds — your report helps keep campus clean!</div></div>
+      </div>
+      <div class="cb">
+        <form id="complaintForm" onsubmit="submitForm(event)">
+
+          <!-- ISSUE TYPE -->
+          <div class="form-group">
+            <label class="flbl">What's the problem?<span class="req">*</span></label>
+            <div class="issue-chips" id="issueChips">
+              <div class="ic" onclick="selectIssue('overflow',this)"><span class="ic-ico">🗑️</span> Overflowing bin</div>
+              <div class="ic" onclick="selectIssue('smell',this)"><span class="ic-ico">💨</span> Bad smell</div>
+              <div class="ic" onclick="selectIssue('damaged',this)"><span class="ic-ico">🔧</span> Damaged bin</div>
+              <div class="ic" onclick="selectIssue('wet',this)"><span class="ic-ico">💧</span> Wet waste</div>
+              <div class="ic" onclick="selectIssue('animal',this)" style="border-color:var(--rbd)"><span class="ic-ico">🐾</span> Animal activity</div>
+              <div class="ic" onclick="selectIssue('other',this)"><span class="ic-ico">📋</span> Other</div>
+            </div>
+            <input type="hidden" id="issueType" required>
+          </div>
+
+          <!-- LOCATION -->
+          <div class="form-group">
+            <label class="flbl">Where is the bin?<span class="req">*</span> <span style="font-weight:500;color:var(--text3)">(or use the map →)</span></label>
+            <select class="fsel" id="locationSel" onchange="syncMapFromDropdown(this.value)">
+              <option value="">-- Select a location --</option>
+              <option value="library">📚 Library Area</option>
+              <option value="cafeteria">🍽️ Cafeteria</option>
+              <option value="maingate">🚪 Main Gate</option>
+              <option value="lab">💻 Computer Lab Block</option>
+              <option value="sports">⚽ Sports Ground</option>
+              <option value="parking">🚗 Parking Area</option>
+              <option value="hostel">🏠 Hostel Block</option>
+              <option value="lecture">🎓 Lecture Hall Area</option>
+              <option value="garden">🌳 Garden / Walkway</option>
+              <option value="other_loc">📍 Other (see map)</option>
+            </select>
+          </div>
+
+          <!-- BIN ID -->
+          <div class="form-group">
+            <label class="flbl">Bin ID <span style="font-weight:500;color:var(--text3)">(if visible on the bin, optional)</span></label>
+            <input class="finput" type="text" id="binId" placeholder="e.g. BIN-C03" style="text-transform:uppercase">
+          </div>
+
+          <!-- DESCRIPTION -->
+          <div class="form-group">
+            <label class="flbl">Describe the problem<span class="req">*</span></label>
+            <textarea class="ftextarea" id="description" placeholder="Tell us more — e.g. 'The bin near the library entrance is overflowing and there is a bad smell. It has been like this since morning.'" maxlength="400" oninput="document.getElementById('descCount').textContent=this.value.length+'/400 characters'" required></textarea>
+            <div class="char-count" id="descCount">0/400 characters</div>
+          </div>
+
+          <!-- DATE TIME -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="flbl">Date<span class="req">*</span></label>
+              <input class="finput" type="date" id="reportDate" required>
+            </div>
+            <div class="form-group">
+              <label class="flbl">Time<span class="req">*</span></label>
+              <input class="finput" type="time" id="reportTime" required>
+            </div>
+          </div>
+
+          <!-- PHOTO UPLOAD -->
+          <div class="form-group">
+            <label class="flbl">Upload a Photo <span style="font-weight:500;color:var(--text3)">(optional — helps us understand faster)</span></label>
+            <div class="photo-upload" id="photoBox" onclick="document.getElementById('photoInput').click()">
+              <div style="font-size:32px;margin-bottom:8px">📷</div>
+              <div style="font-size:13.5px;font-weight:700;color:var(--text2)">Click to upload a photo</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:3px">JPG, PNG or HEIC — max 5MB</div>
+            </div>
+            <input type="file" id="photoInput" accept="image/*" multiple style="display:none" onchange="handlePhoto(this)">
+            <div class="photo-preview" id="photoPreview"></div>
+          </div>
+
+          <!-- STUDENT ID (optional) -->
+          <div class="form-group">
+            <label class="flbl">Your Student ID <span style="font-weight:500;color:var(--text3)">(optional — helps us follow up with you)</span></label>
+            <input class="finput" type="text" id="studentId" placeholder="e.g. IT21234567">
+          </div>
+
+          <div class="submit-row">
+            <button type="submit" class="btn btn-g" style="padding:11px 28px;font-size:14px">✅ Submit Report</button>
+            <button type="button" class="btn btn-o" onclick="resetForm()">🔄 Clear form</button>
+            <div class="form-note">📱 Your report goes directly to the facilities team</div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MAP CARD -->
+    <div>
+      <div class="card">
+        <div class="ch">
+          <div><div class="ct">📍 Tap a Bin on the Map</div><div class="cd">Click a bin marker or anywhere on the map to pin your location</div></div>
+        </div>
+        <div>
+          <div class="map-area" id="campusMapReport" style="height:340px" onclick="handleMapClick(event)">
+            <div class="map-grid-bg"></div>
+
+            <!-- Building labels -->
+            <div class="map-label" style="top:15px;left:50%;transform:translateX(-50%)">SLIIT Campus — Malabe</div>
+            <div class="map-label" style="top:55px;left:30px">📚 Library</div>
+            <div class="map-label" style="top:120px;left:30px">🍽️ Cafeteria</div>
+            <div class="map-label" style="top:200px;left:40px">💻 Labs</div>
+            <div class="map-label" style="top:55px;right:30px">🎓 Lectures</div>
+            <div class="map-label" style="top:200px;right:40px">⚽ Sports</div>
+
+            <!-- Bin markers -->
+            <div class="map-bin bin-full" style="left:80px;top:80px" onclick="mapSelectBin(event,'library','BIN-A07')" title="Library — BIN-A07 (Full)">🗑</div>
+            <div class="map-bin bin-ok"   style="left:130px;top:90px" onclick="mapSelectBin(event,'library','BIN-A02')" title="Library — BIN-A02 (OK)">🗑</div>
+            <div class="map-bin bin-med"  style="left:80px;top:150px" onclick="mapSelectBin(event,'cafeteria','BIN-C03')" title="Cafeteria — BIN-C03 (Medium)">🗑</div>
+            <div class="map-bin bin-full" style="left:140px;top:155px" onclick="mapSelectBin(event,'cafeteria','BIN-B12')" title="Cafeteria — BIN-B12 (Full)">🗑</div>
+            <div class="map-bin bin-ok"   style="left:80px;top:230px" onclick="mapSelectBin(event,'lab','BIN-D01')" title="Labs — BIN-D01 (OK)">🗑</div>
+            <div class="map-bin bin-med"  style="left:300px;top:75px" onclick="mapSelectBin(event,'lecture','BIN-B09')" title="Lectures — BIN-B09 (Medium)">🗑</div>
+            <div class="map-bin bin-ok"   style="left:350px;top:100px" onclick="mapSelectBin(event,'lecture','BIN-E07')" title="Lectures — BIN-E07 (OK)">🗑</div>
+            <div class="map-bin bin-med"  style="left:310px;top:210px" onclick="mapSelectBin(event,'sports','BIN-D05')" title="Sports — BIN-D05 (Medium)">🗑</div>
+            <div class="map-bin bin-ok"   style="left:200px;top:160px" onclick="mapSelectBin(event,'maingate','BIN-E02')" title="Main Gate — BIN-E02 (OK)">🗑</div>
+
+            <div id="mapPin"></div>
+            <div class="map-crosshair-hint" id="mapHint">Click anywhere to pin your location, or tap a bin</div>
+          </div>
+          <div class="selected-loc-bar" id="selectedLocBar" style="display:none">
+            <span style="font-size:18px">📍</span>
+            <span id="selectedLocText">No location selected</span>
+            <button class="btn btn-o" style="padding:4px 10px;font-size:12px;margin-left:auto" onclick="clearMapPin()">✕ Clear</button>
+          </div>
+          <div class="map-leg">
+            <div class="mleg-row"><div class="mleg-dot" style="background:var(--green)"></div>Bin OK — Empty/Normal</div>
+            <div class="mleg-row"><div class="mleg-dot" style="background:var(--amber)"></div>Medium — Getting Full</div>
+            <div class="mleg-row"><div class="mleg-dot" style="background:var(--red)"></div>Full — Needs Collection</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK TIPS -->
+      <div class="card">
+        <div class="ch"><div class="ct">💡 Quick Tips</div></div>
+        <div class="cb" style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:10px;padding:10px 12px;background:var(--gbg);border-radius:10px;border:1px solid var(--gbd)">
+            <span style="font-size:18px">📸</span>
+            <div style="font-size:13px;color:var(--gdk);font-weight:600">A photo helps the team find and fix the problem much faster!</div>
+          </div>
+          <div style="display:flex;gap:10px;padding:10px 12px;background:var(--abg);border-radius:10px;border:1px solid var(--abd)">
+            <span style="font-size:18px">⚡</span>
+            <div style="font-size:13px;color:var(--adk);font-weight:600">Most reports are resolved within 2–4 hours during working hours.</div>
+          </div>
+          <div style="display:flex;gap:10px;padding:10px 12px;background:var(--bbg);border-radius:10px;border:1px solid var(--bbd)">
+            <span style="font-size:18px">🚨</span>
+            <div style="font-size:13px;color:var(--bdk);font-weight:600">If it's a health hazard, use the <strong>Emergency Report</strong> button instead.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 2: TRACK COMPLAINTS
+══════════════════════════════════════════ -->
+<div class="sec" id="tab-track">
+
+  <!-- SEARCH BAR -->
+  <div class="card">
+    <div class="cb" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <input class="finput" type="text" placeholder="🔍 Search by Complaint ID or location..." style="flex:1;min-width:200px" oninput="filterComplaints(this.value)">
+      <select class="fsel" style="width:160px" onchange="filterStatus(this.value)">
+        <option value="all">All Statuses</option>
+        <option value="Submitted">Submitted</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Resolved">Resolved</option>
+      </select>
+      <button class="btn btn-g" onclick="toast2('info','Refreshed','Complaint list updated.')">🔄 Refresh</button>
+    </div>
+  </div>
+
+  <!-- PROGRESS TRACKER (top complaint) -->
+  <div class="card">
+    <div class="ch"><div><div class="ct">📦 C105 — Your Most Recent Complaint</div><div class="cd">Cafeteria · Overflowing bin · Submitted today</div></div><span class="sbadge sb-prog">⏳ In Progress</span></div>
+    <div class="cb">
+      <div class="track-steps">
+        <div class="tstep done"><div class="tstep-dot">✓</div><div class="tstep-lbl">Submitted</div></div>
+        <div class="tstep done"><div class="tstep-dot">✓</div><div class="tstep-lbl">Received</div></div>
+        <div class="tstep prog"><div class="tstep-dot">⚙</div><div class="tstep-lbl">In Progress</div></div>
+        <div class="tstep"><div class="tstep-dot" style="font-size:18px">✓</div><div class="tstep-lbl">Resolved</div></div>
+      </div>
+      <div style="padding:12px 14px;background:var(--abg);border-radius:10px;border:1px solid var(--abd);font-size:13px;color:var(--adk);font-weight:600">
+        ⏳ A maintenance team member has been assigned. Estimated resolution: today by 5pm.
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLAINTS TABLE -->
+  <div class="card">
+    <div class="ch"><div><div class="ct">📋 All Complaints</div><div class="cd">Click any row to see full details</div></div></div>
+    <div class="tscroll">
+      <table>
+        <thead><tr>
+          <th>ID</th><th>Location</th><th>Issue Type</th><th>Description</th><th>Date</th><th>Status</th><th>Action</th>
+        </tr></thead>
+        <tbody id="complaintsTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 3: RATE CLEANLINESS
+══════════════════════════════════════════ -->
+<div class="sec" id="tab-rate">
+  <div class="g2">
+    <!-- MAIN RATING -->
+    <div class="card">
+      <div class="ch"><div><div class="ct">⭐ How Clean Is Campus Today?</div><div class="cd">Your rating helps identify problem areas</div></div></div>
+      <div class="cb">
+        <div class="stars-wrap">
+          <div class="stars-row" id="mainStars">
+            <div class="star" onclick="setRating(1)">★</div>
+            <div class="star" onclick="setRating(2)">★</div>
+            <div class="star" onclick="setRating(3)">★</div>
+            <div class="star" onclick="setRating(4)">★</div>
+            <div class="star" onclick="setRating(5)">★</div>
+          </div>
+          <div class="star-labels">
+            <span>Very Poor</span><span>Poor</span><span>Average</span><span>Good</span><span>Excellent</span>
+          </div>
+          <div class="rating-feedback" id="ratingFeedback" style="color:var(--text3)">Tap a star to rate today</div>
+        </div>
+
+        <!-- ASPECT RATINGS -->
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px">Rate specific areas:</div>
+          <div class="aspect-ratings">
+            <div class="aspect-row"><div class="aspect-name">📚 Library Area</div><div class="aspect-stars" id="asp-library" onmouseover="hoverAsp(event,'library')" onclick="setAspRating(event,'library')"></div></div>
+            <div class="aspect-row"><div class="aspect-name">🍽️ Cafeteria</div><div class="aspect-stars" id="asp-cafeteria" onmouseover="hoverAsp(event,'cafeteria')" onclick="setAspRating(event,'cafeteria')"></div></div>
+            <div class="aspect-row"><div class="aspect-name">💻 Lab Block</div><div class="aspect-stars" id="asp-lab" onmouseover="hoverAsp(event,'lab')" onclick="setAspRating(event,'lab')"></div></div>
+            <div class="aspect-row"><div class="aspect-name">⚽ Sports Area</div><div class="aspect-stars" id="asp-sports" onmouseover="hoverAsp(event,'sports')" onclick="setAspRating(event,'sports')"></div></div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <label class="flbl">Any comments?</label>
+          <textarea class="ftextarea" id="ratingComment" placeholder="Tell us what could be improved..." style="min-height:70px"></textarea>
+        </div>
+        <button class="btn btn-g" style="margin-top:12px;width:100%;justify-content:center" onclick="submitRating()">✅ Submit Rating</button>
+      </div>
+    </div>
+
+    <!-- RECENT RATINGS CHART -->
+    <div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">📊 Campus Cleanliness Score</div><div class="cd">Based on 142 student ratings this week</div></div></div>
+        <div class="cb" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+          <div class="score-ring-wrap" style="padding:8px">
+            <div class="score-circle" style="border-color:var(--amber);color:var(--adk)">
+              <div class="score-num" style="color:var(--adk)">3.8</div>
+              <div class="score-unit">/ 5.0</div>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:var(--adk)">⚠️ Needs Improvement</div>
+          </div>
+          <div style="flex:1">
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px"><span>⭐⭐⭐⭐⭐</span><div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:18%;height:100%;background:#22c88a;border-radius:4px"></div></div><span style="font-weight:700;color:var(--text2);width:24px">18%</span></div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px"><span>⭐⭐⭐⭐</span><div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:30%;height:100%;background:#22c88a;border-radius:4px"></div></div><span style="font-weight:700;color:var(--text2);width:24px">30%</span></div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px"><span>⭐⭐⭐</span><div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:28%;height:100%;background:#f59e0b;border-radius:4px"></div></div><span style="font-weight:700;color:var(--text2);width:24px">28%</span></div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px"><span>⭐⭐</span><div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:15%;height:100%;background:#ef4444;border-radius:4px"></div></div><span style="font-weight:700;color:var(--text2);width:24px">15%</span></div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12.5px"><span>⭐</span><div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:9%;height:100%;background:#ef4444;border-radius:4px"></div></div><span style="font-weight:700;color:var(--text2);width:24px">9%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><div class="ct">🏫 Ratings by Location</div></div>
+        <div class="cb"><div style="height:180px;position:relative"><canvas id="locationRatingChart"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 4: SUGGESTIONS
+══════════════════════════════════════════ -->
+<div class="sec" id="tab-suggest">
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div><div class="ct">💡 Share Your Suggestion</div><div class="cd">Help us improve waste management on campus</div></div></div>
+      <div class="cb">
+        <div class="form-group">
+          <label class="flbl">Quick ideas — click to add to your suggestion:</label>
+          <div class="suggestion-chips" id="sugChips">
+            <div class="sug-chip" onclick="addSugChip('Add more bins near the cafeteria',this)">➕ More bins near cafeteria</div>
+            <div class="sug-chip" onclick="addSugChip('Increase collection frequency during lunch hours',this)">🕛 More frequent collection</div>
+            <div class="sug-chip" onclick="addSugChip('Add recycling bins with clear labels',this)">♻️ Better recycling options</div>
+            <div class="sug-chip" onclick="addSugChip('Add bin near the sports ground entrance',this)">⚽ Bin near sports area</div>
+            <div class="sug-chip" onclick="addSugChip('Add covered bins to reduce rain exposure',this)">☂️ Covered bins</div>
+            <div class="sug-chip" onclick="addSugChip('Improve bin signage and cleanliness reminders',this)">📢 Better signage</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="flbl">Your Suggestion<span class="req">*</span></label>
+          <textarea class="ftextarea" id="suggestionText" placeholder="Write your idea here... e.g. 'I think adding more bins near the cafeteria would help a lot because students often leave trash on tables when bins are full.'" maxlength="500" oninput="document.getElementById('sugCount').textContent=this.value.length+'/500'" style="min-height:130px"></textarea>
+          <div class="char-count" id="sugCount">0/500</div>
+        </div>
+
+        <div class="form-group">
+          <label class="flbl">Which area does this relate to?</label>
+          <select class="fsel" id="sugArea">
+            <option value="">-- Select area (optional) --</option>
+            <option>Library Area</option><option>Cafeteria</option><option>Main Gate</option>
+            <option>Lab Block</option><option>Sports Ground</option><option>Parking Area</option>
+            <option>Whole Campus</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="flbl">Category</label>
+          <div class="issue-chips">
+            <div class="ic" onclick="selectSugCat('bins',this)"><span class="ic-ico">🗑️</span>More Bins</div>
+            <div class="ic" onclick="selectSugCat('schedule',this)"><span class="ic-ico">🕐</span>Collection Schedule</div>
+            <div class="ic" onclick="selectSugCat('recycling',this)"><span class="ic-ico">♻️</span>Recycling</div>
+            <div class="ic" onclick="selectSugCat('awareness',this)"><span class="ic-ico">📢</span>Awareness</div>
+            <div class="ic" onclick="selectSugCat('other',this)"><span class="ic-ico">💬</span>Other</div>
+          </div>
+          <input type="hidden" id="sugCat">
+        </div>
+
+        <div class="submit-row">
+          <button class="btn btn-pu" style="padding:11px 28px" onclick="submitSuggestion()">💡 Submit Suggestion</button>
+          <div class="form-note">✨ Your ideas are reviewed by the facilities team every week</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT SUGGESTIONS -->
+    <div class="card">
+      <div class="ch"><div><div class="ct">🌟 Recent Suggestions from Students</div><div class="cd">Most upvoted this month</div></div></div>
+      <div class="cb" id="sugList" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 5: CAMPUS OVERVIEW (STUDENT DASHBOARD)
+══════════════════════════════════════════ -->
+<div class="sec" id="tab-overview">
+
+  <!-- SUMMARY STATS -->
+  <div class="g4" style="margin-bottom:16px">
+    <div style="background:var(--white);border-radius:var(--rlg);padding:18px 20px;box-shadow:var(--sh)">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Cleanliness Score</div>
+      <div style="font-family:'Nunito',sans-serif;font-size:36px;font-weight:900;color:var(--amber)">3.8<span style="font-size:16px;color:var(--text3)">/5</span></div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px">⚠️ Needs Improvement</div>
+    </div>
+    <div style="background:var(--white);border-radius:var(--rlg);padding:18px 20px;box-shadow:var(--sh)">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Total Reports</div>
+      <div style="font-family:'Nunito',sans-serif;font-size:36px;font-weight:900;color:var(--blue)">127</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px">This month</div>
+    </div>
+    <div style="background:var(--white);border-radius:var(--rlg);padding:18px 20px;box-shadow:var(--sh)">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Resolved</div>
+      <div style="font-family:'Nunito',sans-serif;font-size:36px;font-weight:900;color:var(--green)">98</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px"><span style="color:var(--gdk);font-weight:700">77%</span> resolved rate</div>
+    </div>
+    <div style="background:var(--white);border-radius:var(--rlg);padding:18px 20px;box-shadow:var(--sh)">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Avg Resolution Time</div>
+      <div style="font-family:'Nunito',sans-serif;font-size:36px;font-weight:900;color:var(--purple)">2.4h</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px">After report submission</div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <!-- PIE CHART: complaint types -->
+    <div class="card">
+      <div class="ch"><div><div class="ct">🥧 Reports by Problem Type</div><div class="cd">What students report most</div></div></div>
+      <div class="cb">
+        <div style="height:220px;position:relative"><canvas id="typePieChart"></canvas></div>
+        <div class="donut-legend" style="margin-top:14px">
+          <div class="dl-row"><div style="display:flex;align-items:center"><div class="dl-dot" style="background:#ef4444"></div><span class="dl-label">🗑️ Overflowing bin</span></div><span class="dl-val">42</span></div>
+          <div class="dl-row"><div style="display:flex;align-items:center"><div class="dl-dot" style="background:#f59e0b"></div><span class="dl-label">💨 Bad smell</span></div><span class="dl-val">28</span></div>
+          <div class="dl-row"><div style="display:flex;align-items:center"><div class="dl-dot" style="background:#3b82f6"></div><span class="dl-label">💧 Wet waste</span></div><span class="dl-val">21</span></div>
+          <div class="dl-row"><div style="display:flex;align-items:center"><div class="dl-dot" style="background:#8b5cf6"></div><span class="dl-label">🔧 Damaged bin</span></div><span class="dl-val">19</span></div>
+          <div class="dl-row"><div style="display:flex;align-items:center"><div class="dl-dot" style="background:#22c88a"></div><span class="dl-label">📋 Other</span></div><span class="dl-val">17</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BAR CHART: complaints by location -->
+    <div class="card">
+      <div class="ch"><div><div class="ct">📍 Reports by Location</div><div class="cd">Where students report problems most often</div></div></div>
+      <div class="cb"><div style="height:270px;position:relative"><canvas id="locationBarChart"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- TREND LINE -->
+  <div class="card">
+    <div class="ch"><div><div class="ct">📈 Daily Report Trend — This Month</div><div class="cd">How many complaints were submitted each day</div></div></div>
+    <div class="cb"><div style="height:180px;position:relative"><canvas id="trendLineChart"></canvas></div></div>
+  </div>
+
+  <!-- MOST REPORTED TABLE -->
+  <div class="card">
+    <div class="ch"><div><div class="ct">🔥 Most Reported Locations</div><div class="cd">Based on complaint frequency this month</div></div></div>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Rank</th><th>Location</th><th>Total Reports</th><th>Most Common Issue</th><th>Avg Resolution</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>🥇 1</td><td>🍽️ Cafeteria</td><td><strong style="color:var(--red)">38</strong></td><td><span class="itag it-ov">🗑️ Overflowing</span></td><td>1.8h</td><td><span class="sbadge sb-prog">Active</span></td></tr>
+          <tr><td>🥈 2</td><td>📚 Library Area</td><td><strong style="color:var(--amber)">29</strong></td><td><span class="itag it-sm">💨 Bad smell</span></td><td>2.2h</td><td><span class="sbadge sb-done">Improving</span></td></tr>
+          <tr><td>🥉 3</td><td>🚪 Main Gate</td><td><strong style="color:var(--amber)">22</strong></td><td><span class="itag it-ov">🗑️ Overflowing</span></td><td>3.1h</td><td><span class="sbadge sb-prog">Active</span></td></tr>
+          <tr><td>4</td><td>💻 Lab Block</td><td>18</td><td><span class="itag it-dm">🔧 Damaged</span></td><td>4.5h</td><td><span class="sbadge sb-sub">Pending</span></td></tr>
+          <tr><td>5</td><td>⚽ Sports Ground</td><td>12</td><td><span class="itag it-ww">💧 Wet waste</span></td><td>2.8h</td><td><span class="sbadge sb-done">Resolved</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /page-wrap -->
+
+<!-- EMERGENCY MODAL -->
+<div class="ov" id="emergencyModal" onclick="closeOv(event)">
+  <div class="mbox">
+    <div class="mhd" style="background:var(--rbg);border-bottom-color:var(--rbd)">
+      <div class="mt" style="color:var(--rdk)">🚨 Report Emergency Issue</div>
+      <button class="mcls" onclick="document.getElementById('emergencyModal').classList.remove('open')">×</button>
+    </div>
+    <div class="mbody">
+      <div style="padding:12px 14px;background:var(--rbg);border-radius:10px;border:1px solid var(--rbd);margin-bottom:16px;font-size:13px;color:var(--rdk);font-weight:600">
+        ⚡ This sends an <strong>immediate priority alert</strong> to the waste supervisor and on-duty facilities team.
+      </div>
+      <div class="form-group">
+        <label class="flbl">Type of Emergency<span class="req">*</span></label>
+        <div class="issue-chips" style="gap:8px">
+          <div class="ic on urgent" onclick="selectEmg('overflow',this)"><span class="ic-ico">🌊</span> Severe Overflow</div>
+          <div class="ic" onclick="selectEmg('hygiene',this)" style="border-color:var(--rbd)"><span class="ic-ico">⚠️</span> Hygiene Risk</div>
+          <div class="ic" onclick="selectEmg('animal',this)" style="border-color:var(--rbd)"><span class="ic-ico">🐾</span> Animal Infestation</div>
+          <div class="ic" onclick="selectEmg('mosquito',this)" style="border-color:var(--rbd)"><span class="ic-ico">🦟</span> Mosquito Breeding</div>
+          <div class="ic" onclick="selectEmg('blocked',this)" style="border-color:var(--rbd)"><span class="ic-ico">🚧</span> Blocked Path</div>
+        </div>
+        <input type="hidden" id="emgType" value="overflow">
+      </div>
+      <div class="form-group">
+        <label class="flbl">Location<span class="req">*</span></label>
+        <select class="fsel" id="emgLoc">
+          <option value="">-- Where is this? --</option>
+          <option>📚 Library Area</option><option>🍽️ Cafeteria</option><option>🚪 Main Gate</option>
+          <option>💻 Lab Block</option><option>⚽ Sports Ground</option><option>🏠 Hostel</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="flbl">Describe the emergency</label>
+        <textarea class="ftextarea" id="emgDesc" placeholder="What exactly is happening? e.g. 'Bin near cafeteria entrance has completely overflowed onto the path. Many students are walking through the waste.'" style="min-height:80px"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="flbl">Your contact (optional — for follow-up)</label>
+        <input class="finput" id="emgContact" type="text" placeholder="Phone number or Student ID">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-r" style="flex:1;justify-content:center;padding:12px" onclick="submitEmergency()">🚨 Send Emergency Alert NOW</button>
+        <button class="btn btn-o" onclick="document.getElementById('emergencyModal').classList.remove('open')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-box">
+    <div class="success-ico" id="successIco">✅</div>
+    <div class="success-title" id="successTitle">Report Submitted!</div>
+    <div id="successCID" style="margin-bottom:12px"></div>
+    <div class="success-msg" id="successMsg">Your report has been sent to the facilities team. They typically respond within 2 hours.</div>
+    <button class="btn btn-g" style="justify-content:center;width:100%;padding:12px" onclick="document.getElementById('successOverlay').classList.remove('open')">Done</button>
+  </div>
+</div>
+
+<div class="toa" id="toaBox"></div>
+
+<script>
+// ── TAB NAVIGATION ──
+function goTab(id, el) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.tnav').forEach(t => t.classList.remove('on'));
+  document.getElementById('tab-' + id).classList.add('on');
+  if (el) el.classList.add('on');
+  if (id === 'overview') initOverviewCharts();
+  if (id === 'rate') initRatingCharts();
+  if (id === 'suggest') renderSuggestions();
+  if (id === 'track') renderComplaints(COMPLAINTS);
+}
+
+// ── FORM LOGIC ──
+let selectedIssue = '', selectedSugCat = '';
+
+function selectIssue(type, el) {
+  document.querySelectorAll('#issueChips .ic').forEach(c => c.classList.remove('on','urgent'));
+  el.classList.add('on');
+  if (['animal','overflow'].includes(type)) el.classList.add('urgent');
+  selectedIssue = type;
+  document.getElementById('issueType').value = type;
+}
+
+function selectSugCat(cat, el) {
+  document.querySelectorAll('#tab-suggest .ic').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  selectedSugCat = cat;
+  document.getElementById('sugCat').value = cat;
+}
+
+// Set today's date/time
+window.addEventListener('load', () => {
+  const now = new Date();
+  document.getElementById('reportDate').value = now.toISOString().split('T')[0];
+  document.getElementById('reportTime').value = now.toTimeString().slice(0,5);
+  initAspectStars();
+  renderSuggestions();
+  renderComplaints(COMPLAINTS);
+});
+
+function handlePhoto(input) {
+  const preview = document.getElementById('photoPreview');
+  const box = document.getElementById('photoBox');
+  preview.innerHTML = '';
+  [...input.files].slice(0, 5).forEach(f => {
+    const img = document.createElement('img');
+    img.className = 'photo-thumb';
+    img.src = URL.createObjectURL(f);
+    preview.appendChild(img);
+  });
+  box.classList.add('has-file');
+  box.innerHTML = `<div style="font-size:28px;margin-bottom:5px">📷</div><div style="font-size:13px;font-weight:700;color:var(--gdk)">${input.files.length} photo${input.files.length>1?'s':''} selected</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Click to change</div>`;
+}
+
+let cid = 100;
+function submitForm(e) {
+  e.preventDefault();
+  if (!selectedIssue) { toast2('warning','Select an Issue','Please choose what type of problem this is.'); return; }
+  if (!document.getElementById('locationSel').value && !selectedMapLoc) { toast2('warning','Select a Location','Please choose a location from the dropdown or tap the map.'); return; }
+  cid++;
+  addComplaint(cid, selectedMapLoc || document.getElementById('locationSel').value, selectedIssue, document.getElementById('description').value);
+  document.getElementById('successIco').textContent = '✅';
+  document.getElementById('successTitle').textContent = 'Report Submitted!';
+  document.getElementById('successCID').innerHTML = `<div class="cid-pill">Complaint ID: C${cid}</div>`;
+  document.getElementById('successMsg').textContent = 'Your report has been sent to the facilities team. Save your Complaint ID to track progress. They typically respond within 2 hours.';
+  document.getElementById('successOverlay').classList.add('open');
+  resetForm();
+}
+
+function resetForm() {
+  document.getElementById('complaintForm').reset();
+  document.querySelectorAll('#issueChips .ic').forEach(c => c.classList.remove('on','urgent'));
+  document.getElementById('photoPreview').innerHTML = '';
+  const box = document.getElementById('photoBox');
+  box.classList.remove('has-file');
+  box.innerHTML = `<div style="font-size:32px;margin-bottom:8px">📷</div><div style="font-size:13.5px;font-weight:700;color:var(--text2)">Click to upload a photo</div><div style="font-size:12px;color:var(--text3);margin-top:3px">JPG, PNG or HEIC — max 5MB</div>`;
+  selectedIssue = ''; clearMapPin();
+  const now = new Date();
+  document.getElementById('reportDate').value = now.toISOString().split('T')[0];
+  document.getElementById('reportTime').value = now.toTimeString().slice(0,5);
+  document.getElementById('descCount').textContent = '0/400 characters';
+}
+
+// ── MAP LOGIC ──
+let selectedMapLoc = '', selectedMapPin = null;
+
+function handleMapClick(e) {
+  if (e.target.classList.contains('map-bin') || e.target.closest('.map-bin')) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  placePin(x, y, 'Custom location');
+  document.getElementById('locationSel').value = 'other_loc';
+  selectedMapLoc = 'Custom location (pinned on map)';
+}
+
+function mapSelectBin(e, loc, binId) {
+  e.stopPropagation();
+  document.querySelectorAll('.map-bin').forEach(b => b.classList.remove('selected'));
+  e.currentTarget.classList.add('selected');
+  const rect = e.currentTarget.getBoundingClientRect();
+  const mapRect = document.getElementById('campusMapReport').getBoundingClientRect();
+  placePin(rect.left - mapRect.left + 16, rect.top - mapRect.top - 8, `${binId} — ${loc}`);
+  const locMap = {library:'library', cafeteria:'cafeteria', maingate:'maingate', lab:'lab', sports:'sports', lecture:'lecture'};
+  document.getElementById('locationSel').value = locMap[loc] || '';
+  document.getElementById('binId').value = binId;
+  selectedMapLoc = `${binId} — ${loc.charAt(0).toUpperCase() + loc.slice(1)}`;
+}
+
+function placePin(x, y, label) {
+  const mapPin = document.getElementById('mapPin');
+  mapPin.innerHTML = `<div class="map-pin" style="left:${x-14}px;top:${y-34}px">📍</div>`;
+  document.getElementById('mapHint').style.display = 'none';
+  document.getElementById('selectedLocBar').style.display = 'flex';
+  document.getElementById('selectedLocText').textContent = '📍 ' + label;
+  selectedMapLoc = label;
+}
+
+function clearMapPin() {
+  document.getElementById('mapPin').innerHTML = '';
+  document.getElementById('mapHint').style.display = 'block';
+  document.getElementById('selectedLocBar').style.display = 'none';
+  document.querySelectorAll('.map-bin').forEach(b => b.classList.remove('selected'));
+  selectedMapLoc = '';
+}
+
+function syncMapFromDropdown(val) { if (val) clearMapPin(); }
+
+// ── COMPLAINTS DATA ──
+const COMPLAINTS = [
+  {id:'C102', loc:'Library Area',    issue:'overflow', desc:'Bin overflowing near main entrance',   date:'2026-03-12', status:'In Progress'},
+  {id:'C103', loc:'Cafeteria',       issue:'smell',    desc:'Strong bad smell near bin row',         date:'2026-03-11', status:'Resolved'},
+  {id:'C104', loc:'Main Gate',       issue:'overflow', desc:'Bin is full and spilling onto path',    date:'2026-03-13', status:'Submitted'},
+  {id:'C105', loc:'Cafeteria',       issue:'overflow', desc:'Overflowing bin — lunch time rush',     date:'2026-03-14', status:'In Progress'},
+  {id:'C106', loc:'Lab Block',       issue:'damaged',  desc:'Bin lid is broken and missing',         date:'2026-03-14', status:'Submitted'},
+  {id:'C107', loc:'Sports Ground',   issue:'wet',      desc:'Wet waste detected near changing room', date:'2026-03-10', status:'Resolved'},
+  {id:'C108', loc:'Hostel Block',    issue:'animal',   desc:'Dogs near bin every morning',           date:'2026-03-09', status:'Resolved'},
+  {id:'C109', loc:'Parking Area',    issue:'smell',    desc:'Awful smell from overflow bin',         date:'2026-03-14', status:'In Progress'},
+];
+
+const ISSUE_META = {
+  overflow:  {icon:'🗑️', label:'Overflowing bin', cls:'it-ov'},
+  smell:     {icon:'💨', label:'Bad smell',       cls:'it-sm'},
+  damaged:   {icon:'🔧', label:'Damaged bin',     cls:'it-dm'},
+  wet:       {icon:'💧', label:'Wet waste',       cls:'it-ww'},
+  animal:    {icon:'🐾', label:'Animal activity', cls:'it-ov'},
+  other:     {icon:'📋', label:'Other',           cls:'it-ot'},
+};
+
+const STATUS_CLS = {'Submitted':'sb-sub','In Progress':'sb-prog','Resolved':'sb-done'};
+const STATUS_ICO = {'Submitted':'📤','In Progress':'⏳','Resolved':'✅'};
+
+function renderComplaints(data) {
+  document.getElementById('complaintsTable').innerHTML = data.map(c => {
+    const im = ISSUE_META[c.issue] || ISSUE_META.other;
+    const sc = STATUS_CLS[c.status] || 'sb-sub';
+    const si = STATUS_ICO[c.status] || '📤';
+    return `<tr onclick="showComplaintDetail('${c.id}')">
+      <td><strong style="font-family:'Nunito',sans-serif;font-weight:800;color:var(--blue)">${c.id}</strong></td>
+      <td style="font-weight:600;color:var(--text)">${c.loc}</td>
+      <td><span class="itag ${im.cls}">${im.icon} ${im.label}</span></td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.desc}</td>
+      <td style="color:var(--text3);font-size:12px">${c.date}</td>
+      <td><span class="sbadge ${sc}">${si} ${c.status}</span></td>
+      <td><button class="btn btn-o" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation();showComplaintDetail('${c.id}')">View</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function addComplaint(id, loc, issue, desc) {
+  const now = new Date().toISOString().split('T')[0];
+  COMPLAINTS.unshift({id:'C'+id, loc:loc||'Unknown', issue, desc:desc||'No description', date:now, status:'Submitted'});
+  if (document.getElementById('tab-track').classList.contains('on')) renderComplaints(COMPLAINTS);
+}
+
+function filterComplaints(q) {
+  renderComplaints(COMPLAINTS.filter(c => c.id.toLowerCase().includes(q.toLowerCase()) || c.loc.toLowerCase().includes(q.toLowerCase())));
+}
+function filterStatus(s) {
+  renderComplaints(s === 'all' ? COMPLAINTS : COMPLAINTS.filter(c => c.status === s));
+}
+
+function showComplaintDetail(id) {
+  const c = COMPLAINTS.find(x => x.id === id); if (!c) return;
+  const im = ISSUE_META[c.issue] || ISSUE_META.other;
+  const steps = ['Submitted','In Progress','Resolved'];
+  const si = steps.indexOf(c.status);
+  toast2('info', `Complaint ${c.id}`, `${im.icon} ${im.label} at ${c.loc} — Status: ${c.status}`);
+}
+
+// ── STAR RATING ──
+let currentRating = 0;
+const aspRatings = {library:0, cafeteria:0, lab:0, sports:0};
+const ratingLabels = ['','Very Poor 😞','Poor 😕','Average 😐','Good 😊','Excellent 😄'];
+const ratingColors = ['','var(--red)','var(--orange,#f97316)','var(--amber)','var(--green)','var(--green)'];
+
+function setRating(n) {
+  currentRating = n;
+  document.querySelectorAll('#mainStars .star').forEach((s, i) => {
+    s.classList.toggle('lit', i < n);
+  });
+  const fb = document.getElementById('ratingFeedback');
+  fb.textContent = ratingLabels[n];
+  fb.style.color = ratingColors[n];
+}
+
+document.querySelectorAll && document.querySelectorAll('#mainStars .star').forEach((star, idx) => {
+  star.addEventListener('mouseenter', () => {
+    document.querySelectorAll('#mainStars .star').forEach((s, i) => s.classList.toggle('lit', i <= idx));
+    document.getElementById('ratingFeedback').textContent = ratingLabels[idx + 1];
+  });
+  star.addEventListener('mouseleave', () => {
+    document.querySelectorAll('#mainStars .star').forEach((s, i) => s.classList.toggle('lit', i < currentRating));
+    document.getElementById('ratingFeedback').textContent = currentRating ? ratingLabels[currentRating] : 'Tap a star to rate today';
+  });
+});
+
+function initAspectStars() {
+  ['library','cafeteria','lab','sports'].forEach(asp => {
+    const wrap = document.getElementById('asp-' + asp);
+    if (!wrap) return;
+    wrap.innerHTML = [1,2,3,4,5].map(i => `<div class="asp-star" data-n="${i}">★</div>`).join('');
+    wrap.querySelectorAll('.asp-star').forEach((s, i) => {
+      s.onclick = () => { aspRatings[asp] = i + 1; wrap.querySelectorAll('.asp-star').forEach((x, j) => x.classList.toggle('lit', j <= i)); };
+      s.onmouseenter = () => wrap.querySelectorAll('.asp-star').forEach((x, j) => x.classList.toggle('lit', j <= i));
+      s.onmouseleave = () => wrap.querySelectorAll('.asp-star').forEach((x, j) => x.classList.toggle('lit', j < aspRatings[asp]));
+    });
+  });
+}
+
+function hoverAsp(e, asp) {} // handled per-star
+function setAspRating(e, asp) {}
+
+function submitRating() {
+  if (!currentRating) { toast2('warning','Select a Rating','Please tap a star to rate campus cleanliness.'); return; }
+  toast2('success','Rating Submitted! ⭐','Thank you! Your rating helps us improve campus cleanliness.');
+  currentRating = 0;
+  document.querySelectorAll('#mainStars .star').forEach(s => s.classList.remove('lit'));
+  document.getElementById('ratingFeedback').textContent = 'Tap a star to rate today';
+  document.getElementById('ratingFeedback').style.color = 'var(--text3)';
+  document.getElementById('ratingComment').value = '';
+}
+
+// ── SUGGESTIONS ──
+const SUGGESTIONS = [
+  {text:'Add more bins near the cafeteria — they fill up every lunch hour!', votes:47, area:'Cafeteria', cat:'bins', when:'2 days ago'},
+  {text:'Please increase collection frequency during lunch hours (11am–2pm).', votes:38, area:'Whole Campus', cat:'schedule', when:'4 days ago'},
+  {text:'Add recycling bins with clear colour labels — most students want to recycle.', votes:31, area:'Whole Campus', cat:'recycling', when:'1 week ago'},
+  {text:'A covered bin near the sports ground entrance would help a lot during rain.', votes:22, area:'Sports Ground', cat:'bins', when:'1 week ago'},
+  {text:'Better cleanliness reminders on notice boards and screens near dining.', votes:18, area:'Cafeteria', cat:'awareness', when:'2 weeks ago'},
+];
+
+let votedSuggestions = new Set();
+
+function renderSuggestions() {
+  const list = document.getElementById('sugList'); if (!list) return;
+  list.innerHTML = SUGGESTIONS.map((s, i) => `
+    <div style="padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);transition:border-color .15s" onmouseenter="this.style.borderColor='var(--border2)'" onmouseleave="this.style.borderColor='var(--border)'">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px;">"${s.text}"</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--pbg);color:var(--pdk);border:1px solid var(--pbd)">${s.area}</span>
+        <span style="font-size:11px;color:var(--text3)">${s.when}</span>
+        <button onclick="voteSuggestion(${i},this)" style="margin-left:auto;display:flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:${votedSuggestions.has(i)?'var(--gbg)':'var(--white)'};color:${votedSuggestions.has(i)?'var(--gdk)':'var(--text2)'};font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s">
+          👍 <span id="vote-${i}">${s.votes}</span>
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+function voteSuggestion(i, btn) {
+  if (votedSuggestions.has(i)) { toast2('info','Already voted','You have already upvoted this suggestion.'); return; }
+  votedSuggestions.add(i);
+  SUGGESTIONS[i].votes++;
+  document.getElementById('vote-'+i).textContent = SUGGESTIONS[i].votes;
+  btn.style.background = 'var(--gbg)'; btn.style.color = 'var(--gdk)'; btn.style.borderColor = 'var(--gbd)';
+  toast2('success','Thanks for your vote! 👍','Your voice helps shape campus improvements.');
+}
+
+function addSugChip(text, el) {
+  const textarea = document.getElementById('suggestionText');
+  textarea.value = text;
+  document.getElementById('sugCount').textContent = text.length + '/500';
+  document.querySelectorAll('#sugChips .sug-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  textarea.focus();
+}
+
+function submitSuggestion() {
+  const t = document.getElementById('suggestionText').value.trim();
+  if (!t) { toast2('warning','Write a Suggestion','Please type your suggestion before submitting.'); return; }
+  SUGGESTIONS.unshift({text:t, votes:1, area:document.getElementById('sugArea').value || 'General', cat:selectedSugCat, when:'just now'});
+  renderSuggestions();
+  document.getElementById('suggestionText').value = '';
+  document.getElementById('sugCount').textContent = '0/500';
+  document.getElementById('sugArea').value = '';
+  document.querySelectorAll('#tab-suggest .ic').forEach(c => c.classList.remove('on'));
+  selectedSugCat = '';
+  toast2('success','Suggestion Submitted! 💡','Thank you! The facilities team reviews suggestions every week.');
+}
+
+// ── EMERGENCY ──
+function openEmergency() { document.getElementById('emergencyModal').classList.add('open'); }
+function selectEmg(type, el) {
+  document.querySelectorAll('#emergencyModal .ic').forEach(c => c.classList.remove('on','urgent'));
+  el.classList.add('on','urgent');
+  document.getElementById('emgType').value = type;
+}
+function submitEmergency() {
+  const loc = document.getElementById('emgLoc').value;
+  if (!loc) { toast2('warning','Select Location','Please tell us where the emergency is.'); return; }
+  document.getElementById('emergencyModal').classList.remove('open');
+  document.getElementById('successIco').textContent = '🚨';
+  document.getElementById('successTitle').textContent = 'Emergency Alert Sent!';
+  document.getElementById('successCID').innerHTML = `<div class="cid-pill" style="background:var(--rbg);color:var(--rdk);border-color:var(--rbd)">Priority ID: EMG-${Math.floor(100+Math.random()*900)}</div>`;
+  document.getElementById('successMsg').textContent = 'Your emergency report has been sent immediately to the waste supervisor and on-duty team. Someone will respond within 15 minutes.';
+  document.getElementById('successOverlay').classList.add('open');
+}
+function closeOv(e) { if (e.target.classList.contains('ov')) document.querySelectorAll('.ov').forEach(o => o.classList.remove('open')); }
+
+// ── CHARTS ──
+const bOpts = {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{backgroundColor:'#fff', titleColor:'#1a2035', bodyColor:'#5a6480', borderColor:'#e8ecf4', borderWidth:1, padding:10, cornerRadius:8}}, scales:{x:{grid:{color:'rgba(232,236,244,.8)'}, ticks:{color:'#9aa3bc', font:{size:11}}}, y:{grid:{color:'rgba(232,236,244,.8)'}, ticks:{color:'#9aa3bc', font:{size:11}}}}};
+
+let pieCI, barCI, trendCI, locRatingCI;
+
+function initOverviewCharts() {
+  const c1 = document.getElementById('typePieChart');
+  if (c1 && !pieCI) {
+    pieCI = new Chart(c1, {type:'doughnut', data:{labels:['Overflowing','Bad Smell','Wet Waste','Damaged','Other'], datasets:[{data:[42,28,21,19,17], backgroundColor:['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#22c88a'], borderWidth:0, hoverOffset:5}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{backgroundColor:'#fff', titleColor:'#1a2035', bodyColor:'#5a6480', borderColor:'#e8ecf4', borderWidth:1, padding:10, cornerRadius:8}}, cutout:'60%'}});
+  }
+  const c2 = document.getElementById('locationBarChart');
+  if (c2 && !barCI) {
+    barCI = new Chart(c2, {type:'bar', data:{labels:['🍽️ Cafeteria','📚 Library','🚪 Main Gate','💻 Lab Block','⚽ Sports','🚗 Parking','🏠 Hostel'], datasets:[{data:[38,29,22,18,12,8,6], backgroundColor:['#ef4444','#f59e0b','#f59e0b','#3b82f6','#22c88a','#22c88a','#22c88a'], borderRadius:6, borderWidth:0}]}, options:{...bOpts, indexAxis:'y', scales:{x:{...bOpts.scales.x, beginAtZero:true}, y:{...bOpts.scales.y, ticks:{...bOpts.scales.y.ticks, font:{size:12}}}}}});
+  }
+  const c3 = document.getElementById('trendLineChart');
+  if (c3 && !trendCI) {
+    const days = Array.from({length:14}, (_,i) => `Mar ${i+1}`);
+    trendCI = new Chart(c3, {type:'line', data:{labels:days, datasets:[{data:[4,6,3,8,5,9,7,11,6,8,10,9,12,7], borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.07)', fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#3b82f6', borderWidth:2.5}]}, options:{...bOpts, plugins:{...bOpts.plugins}, scales:{...bOpts.scales, y:{...bOpts.scales.y, beginAtZero:true}}}});
+  }
+}
+
+function initRatingCharts() {
+  const c = document.getElementById('locationRatingChart');
+  if (c && !locRatingCI) {
+    locRatingCI = new Chart(c, {type:'bar', data:{labels:['Library','Cafeteria','Main Gate','Lab Block','Sports'], datasets:[{data:[3.6,3.1,3.8,4.0,4.3], backgroundColor:['#f59e0b','#ef4444','#f59e0b','#22c88a','#22c88a'], borderRadius:6, borderWidth:0}]}, options:{...bOpts, scales:{x:{...bOpts.scales.x}, y:{...bOpts.scales.y, min:0, max:5, ticks:{...bOpts.scales.y.ticks, callback:v=>v+'★'}}}}});
+  }
+}
+
+// ── TOAST ──
+function toast2(type, title, msg) {
+  const ic = {success:'✅', info:'ℹ️', warning:'⚠️', danger:'🚨'};
+  const bd = {success:'var(--green)', info:'var(--blue)', warning:'var(--amber)', danger:'var(--red)'};
+  const t = document.createElement('div'); t.className = 'toast';
+  t.style.borderLeft = '4px solid ' + (bd[type]||'var(--blue)');
+  t.innerHTML = `<span style="font-size:20px;flex-shrink:0">${ic[type]||'ℹ️'}</span><div><div class="tttl">${title}</div><div class="tmsg">${msg}</div></div>`;
+  document.getElementById('toaBox').appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(), 350); }, 4500);
+}
+</script>
+</body>
+</html>

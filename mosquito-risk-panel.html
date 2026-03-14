@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mosquito Breeding Risk Panel — SmartBin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f4f6fb;--white:#fff;--border:#e8ecf4;--border2:#d5daea;
+  --text:#1a2035;--text2:#5a6480;--text3:#9aa3bc;
+  --green:#22c88a;--green-bg:#eafaf3;--green-bd:#b6ecd8;
+  --amber:#f59e0b;--amber-bg:#fff8e6;--amber-bd:#fde68a;
+  --red:#ef4444;--red-bg:#fff1f1;--red-bd:#fecaca;
+  --darkred:#991b1b;--darkred-bg:#fef2f2;
+  --blue:#3b82f6;--blue-bg:#eff6ff;--blue-bd:#bfdbfe;
+  --purple:#7c3aed;--purple-bg:#f5f3ff;--purple-bd:#ddd6fe;
+  --r:12px;--rlg:16px;
+  --sh:0 1px 4px rgba(30,40,80,.07),0 0 0 1px var(--border);
+  --shh:0 4px 16px rgba(30,40,80,.11),0 0 0 1px var(--border2);
+  --sh-card:0 2px 12px rgba(30,40,80,.08),0 0 0 1px var(--border);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+
+/* ── PAGE LAYOUT ── */
+.page{display:flex;flex-direction:column;min-height:100vh}
+
+/* ── TOPBAR ── */
+.top{background:var(--white);border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.logo-area{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#991b1b,#ef4444);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ph{font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--text);letter-spacing:-0.3px}
+.ph span{color:var(--red)}
+.lpill{display:flex;align-items:center;gap:6px;background:var(--red-bg);border:1px solid var(--red-bd);color:#b91c1c;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:700}
+.rdot{width:7px;height:7px;background:var(--red);border-radius:50%;animation:pulse-dot 1.2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.6}}
+.tright{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sel{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:7px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;outline:none;font-weight:500}
+.sel:hover,.sel:focus{border-color:var(--red)}
+.btn{padding:8px 16px;border-radius:10px;border:none;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap}
+.btn-r{background:var(--red);color:#fff}.btn-r:hover{background:#dc2626;transform:translateY(-1px)}
+.btn-o{background:var(--white);color:var(--text2);border:1px solid var(--border)}.btn-o:hover{background:var(--bg);color:var(--text);border-color:var(--border2)}
+
+/* ── SCROLL AREA ── */
+.cnt{flex:1;padding:22px 24px;max-width:1600px;margin:0 auto;width:100%}
+
+/* ── BREADCRUMB ── */
+.bc{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text3);margin-bottom:20px}
+.bc a{color:var(--text3);text-decoration:none;cursor:pointer}.bc a:hover{color:var(--red)}
+.bc span:last-child{color:var(--text2);font-weight:600}.bc-sep{color:var(--text3)}
+
+/* ── SECTION HEADING ── */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.sec-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;color:var(--text);display:flex;align-items:center;gap:8px}
+.sec-title .icon-badge{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.sec-sub{font-size:12.5px;color:var(--text3);font-weight:500;margin-top:2px}
+
+/* ── CARD BASE ── */
+.card{background:var(--white);border-radius:var(--rlg);box-shadow:var(--sh-card);overflow:hidden}
+.ch{padding:16px 20px 13px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ct{font-family:'Nunito',sans-serif;font-size:14.5px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:7px}
+.cd{font-size:12px;color:var(--text3);font-weight:500;margin-top:3px}
+.cb{padding:18px 20px}
+
+/* ── STAT PILLS (summary row) ── */
+.summary-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px}
+.rpill{display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px 16px;box-shadow:var(--sh);cursor:default;transition:all .2s}
+.rpill:hover{box-shadow:var(--shh);transform:translateY(-2px)}
+.rpill-ico{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.rpill-num{font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;line-height:1}
+.rpill-lbl{font-size:11.5px;font-weight:600;color:var(--text3);margin-top:2px;line-height:1.3}
+
+/* ── MOSQUITO RISK SECTION ── */
+.risk-section{display:grid;grid-template-columns:260px 1fr 300px;gap:16px;margin-bottom:22px;align-items:start}
+
+/* ── GAUGE ── */
+.gauge-wrap{position:relative;width:200px;height:130px;margin:0 auto}
+.gauge-label-area{text-align:center;margin-top:4px}
+.gauge-score{font-family:'Nunito',sans-serif;font-size:42px;font-weight:900;line-height:1}
+.gauge-risk-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;margin-top:6px}
+
+/* ── SCORE FACTORS ── */
+.factor-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.factor-row:last-child{border-bottom:none}
+.factor-icon{font-size:16px;width:24px;text-align:center;flex-shrink:0}
+.factor-info{flex:1}
+.factor-label{font-size:12.5px;font-weight:600;color:var(--text)}
+.factor-bar-wrap{height:6px;background:var(--bg);border-radius:10px;margin-top:4px;overflow:hidden}
+.factor-bar{height:100%;border-radius:10px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.factor-val{font-size:12px;font-weight:700;width:38px;text-align:right;flex-shrink:0}
+
+/* ── TOP 5 RISKY BINS ── */
+.risk-rank-list{display:flex;flex-direction:column;gap:8px}
+.risk-rank-item{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.risk-rank-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.risk-rank-item.critical::before{background:#991b1b}
+.risk-rank-item.high::before{background:#ef4444}
+.risk-rank-item.moderate::before{background:#f59e0b}
+.risk-rank-item.low::before{background:#22c88a}
+.risk-rank-item.critical{background:var(--darkred-bg);border-color:#fca5a5}
+.risk-rank-item.high{background:var(--red-bg);border-color:var(--red-bd)}
+.risk-rank-item.moderate{background:var(--amber-bg);border-color:var(--amber-bd)}
+.risk-rank-item:hover{transform:translateX(3px);box-shadow:var(--sh)}
+.rri-rank{font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;width:24px;flex-shrink:0;color:var(--text3)}
+.rri-rank.top1{color:#991b1b}
+.rri-rank.top2{color:#ef4444}
+.rri-rank.top3{color:#f59e0b}
+.rri-info{flex:1}
+.rri-id{font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--text)}
+.rri-detail{font-size:11.5px;color:var(--text2);font-weight:500;margin-top:2px}
+.rri-score{font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;flex-shrink:0}
+.rri-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;display:block;margin-top:3px;text-align:center}
+.badge-critical{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
+.badge-high{background:var(--red-bg);color:#b91c1c;border:1px solid var(--red-bd)}
+.badge-moderate{background:var(--amber-bg);color:#b45309;border:1px solid var(--amber-bd)}
+.badge-low{background:var(--green-bg);color:#0e9e6a;border:1px solid var(--green-bd)}
+
+/* ── SELECTED BIN DETAIL CARD ── */
+.bin-detail-card{background:linear-gradient(135deg,#fef2f2 0%,#fff 60%);border:1.5px solid #fca5a5;border-radius:16px;padding:20px;margin-bottom:14px}
+.bdc-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.bdc-icon{width:44px;height:44px;background:linear-gradient(135deg,#991b1b,#ef4444);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.bdc-id{font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;color:var(--text)}
+.bdc-zone{font-size:12px;color:var(--text3);font-weight:600;margin-top:2px}
+.bdc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bdc-stat{background:var(--white);border-radius:10px;padding:10px 12px;border:1px solid var(--border)}
+.bdc-stat-val{font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;color:var(--text)}
+.bdc-stat-key{font-size:11px;font-weight:600;color:var(--text3);margin-top:2px}
+.alert-btn{width:100%;margin-top:12px;background:linear-gradient(135deg,#991b1b,#ef4444);color:#fff;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px}
+.alert-btn:hover{opacity:.9;transform:translateY(-1px)}
+
+/* ── CHARTS SECTION ── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+.chart-full{margin-bottom:22px}
+.tab-bar{display:flex;gap:4px;background:var(--bg);border-radius:10px;padding:4px;width:fit-content}
+.tab{padding:6px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .15s;border:none;background:transparent;font-family:'Plus Jakarta Sans',sans-serif}
+.tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 4px rgba(30,40,80,.09),0 0 0 1px var(--border)}
+.tab:hover:not(.active){color:var(--text)}
+
+/* ── HEATMAP ── */
+.hm-grid{display:grid;gap:3px}
+.hm-cell{height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;transition:transform .1s,box-shadow .1s;position:relative}
+.hm-cell:hover{transform:scale(1.08);z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.hm-lbl{background:transparent;color:var(--text2);font-size:11.5px;font-weight:700;justify-content:flex-start;padding-left:4px}
+.hm-hdr{background:transparent;color:var(--text3);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.hm-tooltip{position:absolute;background:var(--text);color:#fff;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;bottom:calc(100%+5px);left:50%;transform:translateX(-50%);display:none;pointer-events:none;z-index:20;line-height:1.4}
+.hm-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--text)}
+.hm-cell:hover .hm-tooltip{display:block}
+
+/* ── WEATHER CORRELATION ── */
+.correlation-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+.corr-leg-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text2)}
+.corr-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* ── INSIGHT PILLS ── */
+.insight-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.insight-pill{display:flex;align-items:flex-start;gap:8px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:10px 13px;font-size:12.5px;font-weight:600;color:var(--text);flex:1;min-width:200px;box-shadow:var(--sh)}
+.insight-pill .ip-icon{font-size:18px;flex-shrink:0;margin-top:-1px}
+
+/* ── LEGEND SCALE ── */
+.hm-scale-wrap{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;font-weight:600;color:var(--text3)}
+#hmScale{display:flex;gap:2px}
+.panel-controls{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px}
+.pc-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.drill-mini{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.drill-mini-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px}
+
+/* ── RISK METER (sector) ── */
+.sector-meter{display:flex;flex-direction:column;gap:8px}
+.sm-row{display:flex;align-items:center;gap:10px}
+.sm-label{font-size:12.5px;font-weight:700;color:var(--text);width:56px;flex-shrink:0}
+.sm-bar-wrap{flex:1;height:10px;background:var(--bg);border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.sm-bar{height:100%;border-radius:10px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.sm-val{font-size:12px;font-weight:700;width:28px;text-align:right;flex-shrink:0;color:var(--text2)}
+
+/* ── TOAST ── */
+.toa{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--white);border-radius:14px;padding:13px 16px;min-width:290px;max-width:360px;display:flex;align-items:flex-start;gap:11px;animation:slideIn .3s ease;box-shadow:0 8px 30px rgba(20,30,80,.13),0 0 0 1px var(--border);transition:opacity .3s,transform .3s;pointer-events:all}
+@keyframes slideIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+.tico{font-size:20px;flex-shrink:0}
+.tttl{font-size:13px;font-weight:700;color:var(--text)}
+.tmsg{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1200px){
+  .risk-section{grid-template-columns:1fr 1fr}
+  .risk-section > :last-child{grid-column:1/-1}
+  .summary-row{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:900px){
+  .charts-grid{grid-template-columns:1fr}
+  .risk-section{grid-template-columns:1fr}
+  .summary-row{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  .cnt{padding:14px 12px}
+  .summary-row{grid-template-columns:1fr 1fr}
+  .top{padding:10px 14px}
+}
+
+/* ── PULSE ANIMATION ── */
+@keyframes ring-pulse{0%,100%{box-shadow:0 0 0 0 rgba(153,27,27,.4)}50%{box-shadow:0 0 0 8px rgba(153,27,27,0)}}
+.pulse-ring{animation:ring-pulse 1.5s ease-in-out infinite}
+
+/* ── ANIMATE IN ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.card,.rpill,.risk-rank-item,.bin-detail-card{animation:fadeUp .4s ease both}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="top">
+    <div class="logo-area">
+      <div class="logo-icon">🦟</div>
+      <div class="ph">Smart<span>Bin</span></div>
+    </div>
+    <div class="lpill"><div class="rdot"></div>Health Risk Active</div>
+    <div class="tright">
+      <select class="sel" id="zoneSel" onchange="filterByZone(this.value)">
+        <option value="all">📍 All Zones</option>
+        <option value="A">Zone A</option>
+        <option value="B">Zone B</option>
+        <option value="C">Zone C</option>
+        <option value="D">Zone D</option>
+        <option value="E">Zone E</option>
+      </select>
+      <select class="sel" id="timeSel" onchange="updateCharts(this.value)">
+        <option value="24h">Last 24 Hours</option>
+        <option value="7d">Last 7 Days</option>
+        <option value="30d">Last 30 Days</option>
+      </select>
+      <select class="sel" id="riskSel">
+        <option value="all">All Risk Levels</option>
+        <option value="critical">Critical</option>
+        <option value="high">High</option>
+        <option value="moderate">Moderate</option>
+        <option value="low">Low</option>
+      </select>
+      <select class="sel" id="daySel">
+        <option value="all">Any Day</option>
+        <option value="weekday">Weekday</option>
+        <option value="weekend">Weekend</option>
+      </select>
+      <select class="sel" id="weekSel">
+        <option value="this">This Week</option>
+        <option value="last">Last Week</option>
+      </select>
+      <select class="sel" id="timeBlockSel">
+        <option value="all">Any Time</option>
+        <option value="morning">Morning</option>
+        <option value="afternoon">Afternoon</option>
+        <option value="evening">Evening</option>
+        <option value="night">Night</option>
+      </select>
+      <button class="btn btn-o" onclick="resetAllFiltersGlobal()">↺ Reset All Filters</button>
+      <button class="btn btn-o" onclick="refreshData()">↺ Refresh</button>
+      <button class="btn btn-r" onclick="exportReport()">⬇ Export Report</button>
+      <a href="smart-waste-dashboard (1).html" class="btn btn-o">🏠 Dashboard</a>
+      <a href="risk-hotspot-map.html" class="btn btn-o">← Risk Map</a>
+    </div>
+  </div>
+
+  <div class="cnt">
+    <!-- BREADCRUMB -->
+    <div class="bc">
+      <a href="smart-waste-dashboard (1).html">Home</a>
+      <span class="bc-sep">›</span>
+      <a href="risk-hotspot-map.html">Risk Hotspot Map</a>
+      <span class="bc-sep">›</span>
+      <span>Mosquito Breeding Risk Panel</span>
+    </div>
+
+    <!-- SUMMARY PILLS -->
+    <div class="summary-row">
+      <div class="rpill" style="animation-delay:.05s">
+        <div class="rpill-ico" style="background:#fef2f2"><span style="font-size:20px">🦟</span></div>
+        <div>
+          <div class="rpill-num" style="color:#991b1b" id="pCritical">2</div>
+          <div class="rpill-lbl">Critical Risk Bins</div>
+        </div>
+      </div>
+      <div class="rpill" style="animation-delay:.1s">
+        <div class="rpill-ico" style="background:var(--red-bg)"><span style="font-size:20px">🔴</span></div>
+        <div>
+          <div class="rpill-num" style="color:var(--red)" id="pHigh">3</div>
+          <div class="rpill-lbl">High Risk Bins</div>
+        </div>
+      </div>
+      <div class="rpill" style="animation-delay:.15s">
+        <div class="rpill-ico" style="background:var(--amber-bg)"><span style="font-size:20px">⚠️</span></div>
+        <div>
+          <div class="rpill-num" style="color:var(--amber)" id="pModerate">5</div>
+          <div class="rpill-lbl">Moderate Risk</div>
+        </div>
+      </div>
+      <div class="rpill" style="animation-delay:.2s">
+        <div class="rpill-ico" style="background:var(--green-bg)"><span style="font-size:20px">✅</span></div>
+        <div>
+          <div class="rpill-num" style="color:var(--green)" id="pSafe">35</div>
+          <div class="rpill-lbl">Low / Safe Bins</div>
+        </div>
+      </div>
+      <div class="rpill" style="animation-delay:.25s">
+        <div class="rpill-ico" style="background:var(--blue-bg)"><span style="font-size:20px">🌧️</span></div>
+        <div>
+          <div class="rpill-num" style="color:var(--blue)" id="pHumidity">82<span style="font-size:16px;font-weight:600">%</span></div>
+          <div class="rpill-lbl">Avg Humidity Today</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <div class="panel-controls">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Panel Controls</div>
+          <div style="font-size:12px;color:var(--text3);font-weight:500">Apply filters and inspect drill-down metrics from charts</div>
+        </div>
+        <div class="pc-group">
+          <button class="btn btn-r" style="font-size:12px;padding:6px 10px" onclick="applyPanelControls()">Apply Filters</button>
+          <button class="btn btn-o" style="font-size:12px;padding:6px 10px" onclick="resetPanelControls()">Reset</button>
+        </div>
+      </div>
+      <div class="cb" id="panelDrilldown" style="padding-top:0">
+        <div style="font-size:12px;color:var(--text3);font-weight:600">Click a zone bar, heatmap cell, or correlation point for detailed drill-down.</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 1: MOSQUITO BREEDING RISK PANEL        -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="sec-head">
+      <div>
+        <div class="sec-title"><span class="icon-badge" style="background:#fef2f2;font-size:18px">🦟</span> Mosquito Breeding Risk Panel</div>
+        <div class="sec-sub">Real-time risk scoring based on moisture, humidity, rainfall and collection patterns</div>
+      </div>
+    </div>
+
+    <div class="risk-section">
+
+      <!-- GAUGE + SCORE CARD -->
+      <div class="card" style="animation-delay:.1s">
+        <div class="ch">
+          <div>
+            <div class="ct">Overall Risk Score</div>
+            <div class="cd">All zones combined · Updated now</div>
+          </div>
+        </div>
+        <div class="cb" style="padding:20px">
+          <div class="gauge-wrap">
+            <canvas id="gaugeChart" width="200" height="130"></canvas>
+          </div>
+          <div class="gauge-label-area">
+            <div class="gauge-score" id="gaugeScoreText" style="color:#991b1b">78</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text3);margin-top:2px">out of 100</div>
+            <div class="gauge-risk-badge" id="gaugeRiskBadge" style="background:#fef2f2;color:#991b1b;border:1.5px solid #fca5a5">
+              🦟 Critical Risk
+            </div>
+          </div>
+
+          <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Risk Level Key</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600">
+                <div style="width:10px;height:10px;background:#991b1b;border-radius:50%" class="pulse-ring"></div>
+                <span style="color:#991b1b">Critical (75–100)</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600">
+                <div style="width:10px;height:10px;background:#ef4444;border-radius:50%"></div>
+                <span style="color:#b91c1c">High (50–74)</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600">
+                <div style="width:10px;height:10px;background:#f59e0b;border-radius:50%"></div>
+                <span style="color:#b45309">Moderate (25–49)</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600">
+                <div style="width:10px;height:10px;background:#22c88a;border-radius:50%"></div>
+                <span style="color:#0e9e6a">Low (0–24)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCORE FACTORS + TOP 5 BINS -->
+      <div class="card" style="animation-delay:.15s">
+        <div class="ch">
+          <div>
+            <div class="ct">Score Breakdown</div>
+            <div class="cd">How the risk score is calculated</div>
+          </div>
+          <select class="sel" style="font-size:12px;padding:5px 10px" id="binSelectFactor" onchange="updateFactors(this.value)">
+            <option value="overall">All Zones Avg</option>
+            <option value="C03">BIN-C03</option>
+            <option value="B12">BIN-B12</option>
+            <option value="E02">BIN-E02</option>
+            <option value="A07">BIN-A07</option>
+          </select>
+        </div>
+        <div class="cb">
+          <div id="factorList"></div>
+          <div class="insight-row" id="insightRow"></div>
+        </div>
+      </div>
+
+      <!-- TOP 5 RISKY BINS -->
+      <div>
+        <div class="card" style="animation-delay:.2s">
+          <div class="ch">
+            <div>
+              <div class="ct">🏆 Top 5 Riskiest Bins</div>
+              <div class="cd">Ranked by breeding risk score</div>
+            </div>
+          </div>
+          <div class="cb" style="padding:12px">
+            <div class="risk-rank-list" id="riskRankList"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SELECTED BIN DETAIL (shows on click) -->
+    <div id="binDetailSection" style="display:none;margin-bottom:22px">
+      <div class="sec-head">
+        <div>
+          <div class="sec-title">📋 Bin Detail View</div>
+          <div class="sec-sub">Full risk profile for selected bin</div>
+        </div>
+        <button class="btn btn-o" style="font-size:12px" onclick="closeBinDetail()">✕ Close</button>
+      </div>
+      <div id="binDetailContent"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 2: SECTOR COMPARISON                   -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="sec-head">
+      <div>
+        <div class="sec-title"><span class="icon-badge" style="background:#eff6ff;font-size:18px">📊</span> Zone Comparison</div>
+        <div class="sec-sub">Compare all zones by moisture activity — spot the worst performing areas</div>
+      </div>
+      <div class="tab-bar" id="sectorTabBar">
+        <button class="tab active" onclick="switchSectorTab('count',this)">Wet Bin Count</button>
+        <button class="tab" onclick="switchSectorTab('freq',this)">Alert Frequency</button>
+        <button class="tab" onclick="switchSectorTab('duration',this)">Wet Duration</button>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card" style="animation-delay:.1s">
+        <div class="ch">
+          <div>
+            <div class="ct">Zone Comparison Bar Chart</div>
+            <div class="cd" id="sectorSubtitle">Number of wet bins currently active per zone</div>
+          </div>
+        </div>
+        <div class="cb">
+          <div style="position:relative;height:220px"><canvas id="sectorChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- SECTOR RISK METERS -->
+      <div class="card" style="animation-delay:.15s">
+        <div class="ch">
+          <div>
+            <div class="ct">Zone Risk Meters</div>
+            <div class="cd">Risk level per zone at a glance</div>
+          </div>
+        </div>
+        <div class="cb">
+          <div class="sector-meter" id="sectorMeter"></div>
+          <div style="margin-top:16px;padding:10px 12px;background:var(--red-bg);border:1px solid var(--red-bd);border-radius:10px;font-size:12.5px;font-weight:600;color:#b91c1c">
+            ⚠️ Zone C and Zone B have the highest combined risk. Prioritise collection here first.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 3: TIME-OF-DAY HEATMAP                 -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="sec-head">
+      <div>
+        <div class="sec-title"><span class="icon-badge" style="background:#f5f3ff;font-size:18px">🕐</span> Peak Moisture Hours</div>
+        <div class="sec-sub">When do moisture alerts spike? Spot daily patterns to plan better collection schedules</div>
+      </div>
+    </div>
+
+    <div class="card chart-full" style="animation-delay:.1s">
+      <div class="ch">
+        <div>
+          <div class="ct">Time-of-Day Heatmap</div>
+          <div class="cd">Rows = Zones · Columns = Time blocks · Colour intensity = Alert frequency</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:600;color:var(--text3)">Hover cells for details</span>
+        </div>
+      </div>
+      <div class="cb">
+        <div style="overflow-x:auto" id="hmContainer"></div>
+        <div class="hm-scale-wrap">
+          <span>Rare</span>
+          <div id="hmScale"></div>
+          <span>Frequent</span>
+          <span style="margin-left:16px;color:var(--text)">📌 Zone C and Zone B spike during afternoon (3pm–6pm)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 4: WET vs WEATHER CORRELATION          -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="sec-head">
+      <div>
+        <div class="sec-title"><span class="icon-badge" style="background:#eafaf3;font-size:18px">🌧️</span> Wet Bin vs Weather Correlation</div>
+        <div class="sec-sub">Does rainfall and humidity drive wet bin events? See the pattern clearly</div>
+      </div>
+      <div class="tab-bar" id="corrTabBar">
+        <button class="tab active" onclick="switchCorrTab('24h',this)">24 Hours</button>
+        <button class="tab" onclick="switchCorrTab('7d',this)">7 Days</button>
+        <button class="tab" onclick="switchCorrTab('30d',this)">30 Days</button>
+      </div>
+    </div>
+
+    <div class="card chart-full" style="animation-delay:.1s">
+      <div class="ch">
+        <div>
+          <div class="ct">Rainfall / Humidity vs Moisture Alerts</div>
+          <div class="cd">Compare weather conditions with the number of wet bin alerts — see if they line up</div>
+        </div>
+      </div>
+      <div class="cb">
+        <div style="position:relative;height:260px"><canvas id="corrChart"></canvas></div>
+        <div class="correlation-legend">
+          <div class="corr-leg-item"><div class="corr-dot" style="background:#3b82f6"></div>Rainfall (mm)</div>
+          <div class="corr-leg-item"><div class="corr-dot" style="background:#7c3aed"></div>Humidity (%)</div>
+          <div class="corr-leg-item"><div class="corr-dot" style="background:#ef4444"></div>Wet Bin Alerts</div>
+          <div class="corr-leg-item"><div class="corr-dot" style="background:#f59e0b"></div>PIR Activity Near Bins</div>
+        </div>
+        <div class="insight-row" style="margin-top:12px">
+          <div class="insight-pill"><span class="ip-icon">💡</span>Strong positive correlation (r=0.87) between rainfall events and wet bin alerts within 2–3 hours.</div>
+          <div class="insight-pill"><span class="ip-icon">📈</span>Humidity above 80% increases wet bin probability by 2.4×. Evening periods are most vulnerable.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- bottom spacer -->
+    <div style="height:24px"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toa" id="toaBox"></div>
+
+<script>
+/* ── BIN DATA ── */
+const BINS = [
+  {id:'C03', zone:'C', moisture:'Wet',   wetHrs:14, wetCount:8,  humidity:91, rainfall:'High',   pir:9,  lastColl:15, fill:71,  score:94, risk:'critical'},
+  {id:'B12', zone:'B', moisture:'Wet',   wetHrs:9,  wetCount:5,  humidity:85, rainfall:'High',   pir:7,  lastColl:12, fill:88,  score:82, risk:'critical'},
+  {id:'E02', zone:'E', moisture:'Wet',   wetHrs:5,  wetCount:3,  humidity:78, rainfall:'Medium', pir:5,  lastColl:8,  fill:76,  score:66, risk:'high'},
+  {id:'A07', zone:'A', moisture:'Wet',   wetHrs:4,  wetCount:2,  humidity:75, rainfall:'Medium', pir:4,  lastColl:7,  fill:97,  score:58, risk:'high'},
+  {id:'D05', zone:'D', moisture:'Moist', wetHrs:2,  wetCount:1,  humidity:62, rainfall:'Low',    pir:2,  lastColl:4,  fill:45,  score:38, risk:'moderate'},
+  {id:'A05', zone:'A', moisture:'Moist', wetHrs:2,  wetCount:1,  humidity:65, rainfall:'Low',    pir:2,  lastColl:5,  fill:61,  score:32, risk:'moderate'},
+  {id:'B09', zone:'B', moisture:'Moist', wetHrs:1,  wetCount:0,  humidity:70, rainfall:'None',   pir:1,  lastColl:3,  fill:82,  score:22, risk:'low'},
+  {id:'C06', zone:'C', moisture:'Moist', wetHrs:1,  wetCount:0,  humidity:68, rainfall:'None',   pir:1,  lastColl:3,  fill:58,  score:18, risk:'low'},
+];
+
+const FACTORS_DATA = {
+  overall: {
+    factors:[
+      {label:'Moisture Level',     icon:'💧', val:85, color:'#991b1b', note:'Wet'},
+      {label:'Wet Duration',       icon:'⏱️', val:72, color:'#ef4444', note:'7 hrs avg'},
+      {label:'Repeated Wetness',   icon:'🔁', val:60, color:'#f59e0b', note:'3× this week'},
+      {label:'Humidity',           icon:'🌫️', val:82, color:'#3b82f6', note:'82%'},
+      {label:'Rainfall',           icon:'🌧️', val:70, color:'#3b82f6', note:'High'},
+      {label:'PIR Activity',       icon:'📡', val:55, color:'#7c3aed', note:'Moderate'},
+      {label:'Delayed Collection', icon:'🚛', val:80, color:'#ef4444', note:'12h overdue'},
+    ],
+    score:78
+  },
+  C03: {
+    factors:[
+      {label:'Moisture Level',     icon:'💧', val:100, color:'#991b1b', note:'Wet'},
+      {label:'Wet Duration',       icon:'⏱️', val:95, color:'#991b1b', note:'14 hrs'},
+      {label:'Repeated Wetness',   icon:'🔁', val:90, color:'#991b1b', note:'8× this week'},
+      {label:'Humidity',           icon:'🌫️', val:91, color:'#3b82f6', note:'91%'},
+      {label:'Rainfall',           icon:'🌧️', val:95, color:'#3b82f6', note:'Heavy'},
+      {label:'PIR Activity',       icon:'📡', val:85, color:'#7c3aed', note:'Very High'},
+      {label:'Delayed Collection', icon:'🚛', val:90, color:'#991b1b', note:'15h overdue'},
+    ],
+    score:94
+  },
+  B12: {
+    factors:[
+      {label:'Moisture Level',     icon:'💧', val:100, color:'#991b1b', note:'Wet'},
+      {label:'Wet Duration',       icon:'⏱️', val:80, color:'#ef4444', note:'9 hrs'},
+      {label:'Repeated Wetness',   icon:'🔁', val:70, color:'#ef4444', note:'5× this week'},
+      {label:'Humidity',           icon:'🌫️', val:85, color:'#3b82f6', note:'85%'},
+      {label:'Rainfall',           icon:'🌧️', val:85, color:'#3b82f6', note:'Heavy'},
+      {label:'PIR Activity',       icon:'📡', val:70, color:'#7c3aed', note:'High'},
+      {label:'Delayed Collection', icon:'🚛', val:80, color:'#ef4444', note:'12h overdue'},
+    ],
+    score:82
+  },
+  E02: {
+    factors:[
+      {label:'Moisture Level',     icon:'💧', val:90, color:'#ef4444', note:'Wet'},
+      {label:'Wet Duration',       icon:'⏱️', val:60, color:'#f59e0b', note:'5 hrs'},
+      {label:'Repeated Wetness',   icon:'🔁', val:45, color:'#f59e0b', note:'3× this week'},
+      {label:'Humidity',           icon:'🌫️', val:78, color:'#3b82f6', note:'78%'},
+      {label:'Rainfall',           icon:'🌧️', val:65, color:'#3b82f6', note:'Medium'},
+      {label:'PIR Activity',       icon:'📡', val:55, color:'#7c3aed', note:'Moderate'},
+      {label:'Delayed Collection', icon:'🚛', val:60, color:'#f59e0b', note:'8h overdue'},
+    ],
+    score:66
+  },
+  A07: {
+    factors:[
+      {label:'Moisture Level',     icon:'💧', val:90, color:'#ef4444', note:'Wet'},
+      {label:'Wet Duration',       icon:'⏱️', val:55, color:'#f59e0b', note:'4 hrs'},
+      {label:'Repeated Wetness',   icon:'🔁', val:35, color:'#f59e0b', note:'2× this week'},
+      {label:'Humidity',           icon:'🌫️', val:75, color:'#3b82f6', note:'75%'},
+      {label:'Rainfall',           icon:'🌧️', val:60, color:'#3b82f6', note:'Medium'},
+      {label:'PIR Activity',       icon:'📡', val:40, color:'#7c3aed', note:'Low'},
+      {label:'Delayed Collection', icon:'🚛', val:55, color:'#f59e0b', note:'7h overdue'},
+    ],
+    score:58
+  }
+};
+
+const GAUGE_COLORS = {critical:'#991b1b', high:'#ef4444', moderate:'#f59e0b', low:'#22c88a'};
+const RISK_LABELS  = {critical:'🦟 Critical Risk', high:'⚠️ High Risk', moderate:'🟡 Moderate Risk', low:'✅ Low Risk'};
+const BADGE_STYLE  = {
+  critical:'background:#fef2f2;color:#991b1b;border:1.5px solid #fca5a5',
+  high:'background:var(--red-bg);color:#b91c1c;border:1.5px solid var(--red-bd)',
+  moderate:'background:var(--amber-bg);color:#b45309;border:1.5px solid var(--amber-bd)',
+  low:'background:var(--green-bg);color:#0e9e6a;border:1.5px solid var(--green-bd)'
+};
+let panelFilters = {zone:'all', range:'24h', risk:'all', day:'all', week:'this', time:'all'};
+const GLOBAL_RESET_KEY='smartbin_global_filter_reset_token';
+const PAGE_RESET_KEY='smartbin_last_reset_mosquito';
+
+/* ── GAUGE CHART ── */
+let gaugeCI;
+function drawGauge(score) {
+  const ctx = document.getElementById('gaugeChart');
+  if (!ctx) return;
+  if (gaugeCI) gaugeCI.destroy();
+
+  const level = score >= 75 ? 'critical' : score >= 50 ? 'high' : score >= 25 ? 'moderate' : 'low';
+  const fillColor = GAUGE_COLORS[level];
+  const pct = score / 100;
+
+  gaugeCI = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [pct, 1 - pct],
+        backgroundColor: [fillColor, '#f0f2f8'],
+        borderWidth: 0,
+        circumference: 180,
+        rotation: 270,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: false, cutout: '72%',
+      plugins: { legend: {display:false}, tooltip: {enabled:false} },
+      animation: { duration: 1000, easing: 'easeInOutQuart' }
+    }
+  });
+
+  document.getElementById('gaugeScoreText').textContent = score;
+  document.getElementById('gaugeScoreText').style.color = fillColor;
+  const badge = document.getElementById('gaugeRiskBadge');
+  badge.textContent = RISK_LABELS[level];
+  badge.style.cssText = GAUGE_COLORS[level] + ';' + BADGE_STYLE[level];
+  badge.style.display = 'inline-flex';
+  badge.style.alignItems = 'center';
+  badge.style.padding = '5px 14px';
+  badge.style.borderRadius = '20px';
+  badge.style.fontSize = '13px';
+  badge.style.fontWeight = '700';
+}
+
+/* ── FACTOR LIST ── */
+function updateFactors(key) {
+  const d = FACTORS_DATA[key] || FACTORS_DATA.overall;
+  drawGauge(d.score);
+
+  const html = d.factors.map(f => `
+    <div class="factor-row">
+      <span class="factor-icon">${f.icon}</span>
+      <div class="factor-info">
+        <div class="factor-label">${f.label}</div>
+        <div class="factor-bar-wrap">
+          <div class="factor-bar" style="width:${f.val}%;background:${f.color}"></div>
+        </div>
+      </div>
+      <span class="factor-val" style="color:${f.color}">${f.note}</span>
+    </div>`).join('');
+  document.getElementById('factorList').innerHTML = html;
+
+  const insightHtml = d.score >= 75
+    ? `<div class="insight-pill"><span class="ip-icon">🚨</span>Immediate action required — contact health team and schedule urgent collection.</div>`
+    : d.score >= 50
+    ? `<div class="insight-pill"><span class="ip-icon">⚠️</span>High risk — schedule collection within 4 hours to prevent larvae development.</div>`
+    : d.score >= 25
+    ? `<div class="insight-pill"><span class="ip-icon">👀</span>Moderate risk — monitor closely and schedule collection today.</div>`
+    : `<div class="insight-pill"><span class="ip-icon">✅</span>Low risk — within normal parameters. Continue routine schedule.</div>`;
+  document.getElementById('insightRow').innerHTML = insightHtml;
+}
+
+/* ── TOP 5 BINS RANKED LIST ── */
+function getPanelFilteredBins() {
+  return BINS.filter(b => {
+    const zoneOk = panelFilters.zone === 'all' || b.zone === panelFilters.zone;
+    const riskOk = panelFilters.risk === 'all' || b.risk === panelFilters.risk;
+    return zoneOk && riskOk;
+  });
+}
+
+function renderRankList(list) {
+  const source = list || getPanelFilteredBins();
+  const sorted = [...source].sort((a, b) => b.score - a.score).slice(0, 5);
+  const rankClass = ['top1', 'top2', 'top3', '', ''];
+  const dotColor = {critical:'#991b1b', high:'#ef4444', moderate:'#f59e0b', low:'#22c88a'};
+  const badgeClass = {critical:'badge-critical', high:'badge-high', moderate:'badge-moderate', low:'badge-low'};
+  const badgeLabel = {critical:'🦟 Critical', high:'High Risk', moderate:'Moderate', low:'Low Risk'};
+
+  if (!sorted.length) {
+    document.getElementById('riskRankList').innerHTML = '<div style="font-size:12px;color:var(--text3);font-weight:600;padding:8px">No bins match current filters.</div>';
+    return;
+  }
+
+  document.getElementById('riskRankList').innerHTML = sorted.map((b, i) => `
+    <div class="risk-rank-item ${b.risk}" onclick="showBinDetail('${b.id}')" style="animation-delay:${0.05*i}s">
+      <div class="rri-rank ${rankClass[i]}">#${i+1}</div>
+      <div class="rri-info">
+        <div class="rri-id">BIN-${b.id} · Zone ${b.zone}</div>
+        <div class="rri-detail">${b.moisture} · ${b.wetHrs}h wet · Humidity ${b.humidity}%</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div class="rri-score" style="color:${dotColor[b.risk]}">${b.score}</div>
+        <span class="rri-badge ${badgeClass[b.risk]}">${badgeLabel[b.risk]}</span>
+      </div>
+    </div>`).join('');
+}
+
+/* ── BIN DETAIL ── */
+function showBinDetail(id) {
+  const b = BINS.find(x => x.id === id);
+  if (!b) return;
+  const dotColor = {critical:'#991b1b', high:'#ef4444', moderate:'#f59e0b', low:'#22c88a'};
+  const borderCol = {critical:'#fca5a5', high:' var(--red-bd)', moderate:'var(--amber-bd)', low:'var(--green-bd)'};
+
+  document.getElementById('binDetailContent').innerHTML = `
+    <div class="bin-detail-card" style="border-color:${borderCol[b.risk]}">
+      <div class="bdc-header">
+        <div class="bdc-icon">🦟</div>
+        <div>
+          <div class="bdc-id">BIN-${b.id}</div>
+          <div class="bdc-zone">Zone ${b.zone} · ${b.moisture}</div>
+        </div>
+        <div style="margin-left:auto;text-align:center">
+          <div style="font-family:'Nunito',sans-serif;font-size:36px;font-weight:900;color:${dotColor[b.risk]};line-height:1">${b.score}</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3)">RISK SCORE</div>
+        </div>
+      </div>
+      <div class="bdc-grid">
+        <div class="bdc-stat"><div class="bdc-stat-val" style="color:var(--red)">${b.wetHrs} hrs</div><div class="bdc-stat-key">⏱️ Wet Duration</div></div>
+        <div class="bdc-stat"><div class="bdc-stat-val" style="color:var(--amber)">${b.wetCount}×</div><div class="bdc-stat-key">🔁 Repeated Wetness</div></div>
+        <div class="bdc-stat"><div class="bdc-stat-val" style="color:var(--blue)">${b.humidity}%</div><div class="bdc-stat-key">🌫️ Humidity</div></div>
+        <div class="bdc-stat"><div class="bdc-stat-val" style="color:var(--blue)">${b.rainfall}</div><div class="bdc-stat-key">🌧️ Rainfall Level</div></div>
+        <div class="bdc-stat"><div class="bdc-stat-val" style="color:var(--purple)">${b.pir}/10</div><div class="bdc-stat-key">📡 PIR Activity</div></div>
+        <div class="bdc-stat"><div class="bdc-stat-val" style="color:${b.lastColl>10?'#991b1b':'var(--amber)'}">${b.lastColl}h ago</div><div class="bdc-stat-key">🚛 Last Collection</div></div>
+        <div class="bdc-stat" style="grid-column:1/-1"><div class="bdc-stat-val">${b.fill}%</div><div class="bdc-stat-key">🗑️ Fill Level<div style="height:6px;background:var(--bg);border-radius:4px;margin-top:4px;overflow:hidden"><div style="height:100%;width:${b.fill}%;background:${b.fill>80?'#ef4444':'var(--amber)'};border-radius:4px"></div></div></div></div>
+      </div>
+      <button class="alert-btn" onclick="toast2('danger','🚨 Alert Sent','Health officer notified for BIN-${b.id}. Collection team dispatched.')">
+        🚨 Report to Health Team
+      </button>
+    </div>`;
+
+  document.getElementById('binDetailSection').style.display = 'block';
+  document.getElementById('binDetailSection').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function closeBinDetail() {
+  document.getElementById('binDetailSection').style.display = 'none';
+}
+
+/* ── SECTOR CHART ── */
+let sectorCI;
+const SECTOR_DATA = {
+  count:    {label:'Wet Bin Count', data:[2,3,2,1,1], subtitle:'Number of wet bins currently active per zone'},
+  freq:     {label:'Alert Frequency (today)', data:[8,11,9,3,4], subtitle:'Total moisture alerts fired today per zone'},
+  duration: {label:'Avg Wet Duration (hrs)', data:[3.5,5.2,4.1,1.2,1.8], subtitle:'Average time bins remained wet per zone'}
+};
+let currentSectorMetric = 'count';
+
+function initSectorChart(metric) {
+  const d = SECTOR_DATA[metric || 'count'];
+  const ctx = document.getElementById('sectorChart');
+  if (!ctx) return;
+  if (sectorCI) sectorCI.destroy();
+
+  const zoneRiskColors = ['rgba(239,68,68,.8)','rgba(153,27,27,.85)','rgba(239,68,68,.85)','rgba(245,158,11,.8)','rgba(245,158,11,.8)'];
+  const zoneRiskBorder = ['#ef4444','#991b1b','#ef4444','#f59e0b','#f59e0b'];
+
+  sectorCI = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Zone A','Zone B','Zone C','Zone D','Zone E'],
+      datasets: [{
+        label: d.label, data: d.data,
+        backgroundColor: zoneRiskColors,
+        borderColor: zoneRiskBorder,
+        borderWidth: 1.5, borderRadius: 8, borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {display:false},
+        tooltip: {
+          backgroundColor:'#fff', titleColor:'#1a2035', bodyColor:'#5a6480',
+          borderColor:'#e8ecf4', borderWidth:1, padding:10, cornerRadius:8,
+          callbacks:{label: ctx => ` ${ctx.formattedValue} ${metric==='duration'?'hrs':''}` }
+        }
+      },
+      scales: {
+        x: {grid:{display:false}, ticks:{color:'#9aa3bc', font:{size:12, family:'Plus Jakarta Sans', weight:'600'}}},
+        y: {grid:{color:'rgba(232,236,244,.8)'}, ticks:{color:'#9aa3bc', font:{size:11}}, beginAtZero:true}
+      },
+      animation: {duration:700, easing:'easeInOutQuart'}
+      ,onClick: (_, elements) => {
+        if (!elements.length) return;
+        const i = elements[0].index;
+        const zone = ['A','B','C','D','E'][i];
+        showPanelDrill(`Zone ${zone} · ${d.label}`, [
+          {k:'Metric Value', v:`${d.data[i]}${metric==='duration'?'h':''}`},
+          {k:'Filtered Bins', v:String(getPanelFilteredBins().filter(b => b.zone === zone).length)},
+          {k:'Top Risk Bin', v:`BIN-${(BINS.filter(b => b.zone===zone).sort((a,b)=>b.score-a.score)[0]||{id:'N/A'}).id}`},
+          {k:'Priority', v:d.data[i] >= Math.max(...d.data) ? 'Immediate' : 'Monitor'}
+        ], 'zone chart');
+      }
+    }
+  });
+
+  document.getElementById('sectorSubtitle').textContent = d.subtitle;
+  renderSectorMeters(metric);
+}
+
+function switchSectorTab(metric, el) {
+  currentSectorMetric = metric;
+  document.querySelectorAll('#sectorTabBar .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  initSectorChart(metric);
+}
+
+/* ── SECTOR METERS ── */
+function renderSectorMeters(metric) {
+  const d = SECTOR_DATA[metric || 'count'];
+  const max = Math.max(...d.data);
+  const zones = ['A','B','C','D','E'];
+  const colors = ['#ef4444','#991b1b','#ef4444','#f59e0b','#f59e0b'];
+
+  document.getElementById('sectorMeter').innerHTML = zones.map((z, i) => {
+    const pct = Math.round((d.data[i]/max)*100);
+    return `<div class="sm-row">
+      <span class="sm-label">Zone ${z}</span>
+      <div class="sm-bar-wrap"><div class="sm-bar" style="width:${pct}%;background:${colors[i]}"></div></div>
+      <span class="sm-val">${d.data[i]}${metric==='duration'?'h':''}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ── HEATMAP ── */
+function buildHeatmap() {
+  const container = document.getElementById('hmContainer');
+  const scale = document.getElementById('hmScale');
+  if (!container) return;
+
+  const zones = ['A','B','C','D','E'];
+  const times = ['6am','9am','12pm','3pm','6pm','9pm','12am'];
+  const data = {
+    A: [1, 2, 3, 4, 5, 3, 1],
+    B: [2, 4, 6, 8, 9, 7, 3],
+    C: [3, 5, 7, 9, 9, 8, 4],
+    D: [0, 1, 2, 2, 2, 1, 0],
+    E: [1, 2, 3, 4, 5, 3, 1]
+  };
+  const max = 9;
+
+  let html = `<div class="hm-grid" style="grid-template-columns:64px repeat(${times.length},1fr);min-width:480px">`;
+  html += `<div class="hm-cell hm-hdr" style="height:24px"></div>`;
+  times.forEach(t => html += `<div class="hm-cell hm-hdr" style="height:24px">${t}</div>`);
+
+  zones.forEach(z => {
+    html += `<div class="hm-cell hm-lbl">Zone ${z}</div>`;
+    times.forEach((t, ti) => {
+      const timeShift = panelFilters.time === 'afternoon' ? 1 : panelFilters.time === 'night' ? -1 : 0;
+      const dayScale = panelFilters.day === 'weekend' ? 0.85 : panelFilters.day === 'weekday' ? 1.05 : 1;
+      const weekScale = panelFilters.week === 'last' ? 0.92 : 1;
+      const v = Math.max(0, Math.round((data[z][ti] + timeShift) * dayScale * weekScale));
+      const intensity = v / max;
+      let bg;
+      if (intensity > 0.75) bg = `rgba(153,27,27,${0.55+intensity*0.4})`;
+      else if (intensity > 0.5) bg = `rgba(239,68,68,${0.45+intensity*0.4})`;
+      else if (intensity > 0.2) bg = `rgba(245,158,11,${0.4+intensity*0.5})`;
+      else bg = `rgba(34,200,138,${Math.max(0.1, 0.3)})`;
+      const textColor = intensity > 0.3 ? 'rgba(255,255,255,0.85)' : 'transparent';
+      html += `<div class="hm-cell" style="background:${bg}" onclick="showPanelDrill('Zone ${z} · ${t} (heatmap)',[{k:'Moisture Alerts',v:'${v}'},{k:'Zone',v:'${z}'},{k:'Time Block',v:'${t}'},{k:'Action',v:'${v>=7?'Dispatch early collection':'Continue monitoring'}'}],'heatmap')">
+        <div class="hm-tooltip">Zone ${z} · ${t}<br>${v} moisture alerts</div>
+        <span style="color:${textColor};font-size:9.5px;font-weight:700">${v>0?v:''}</span>
+      </div>`;
+    });
+  });
+  html += '</div>';
+  container.innerHTML = html;
+
+  if (scale) {
+    scale.innerHTML = '';
+    for (let i = 0; i <= 9; i++) {
+      const p = i / 9;
+      let bg;
+      if (p > 0.75) bg = `rgba(153,27,27,${0.55+p*0.4})`;
+      else if (p > 0.5) bg = `rgba(239,68,68,${0.45+p*0.4})`;
+      else if (p > 0.2) bg = `rgba(245,158,11,${0.4+p*0.5})`;
+      else bg = 'rgba(34,200,138,0.3)';
+      const d2 = document.createElement('div');
+      d2.style.cssText = `width:18px;height:14px;background:${bg};border-radius:3px`;
+      scale.appendChild(d2);
+    }
+  }
+}
+
+/* ── CORRELATION CHART ── */
+let corrCI;
+const CORR_DATA = {
+  '24h': {
+    labels:['12am','2am','4am','6am','8am','10am','12pm','2pm','4pm','6pm','8pm','10pm'],
+    rainfall:[2,1,0,1,3,5,8,10,9,12,7,4],
+    humidity:[65,63,61,62,68,74,79,82,84,88,85,80],
+    wetAlerts:[1,0,0,1,2,4,6,8,8,10,7,5],
+    pir:[2,1,1,1,3,5,7,9,8,10,8,6]
+  },
+  '7d': {
+    labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    rainfall:[5,8,2,12,9,15,11],
+    humidity:[70,75,65,85,80,88,82],
+    wetAlerts:[3,5,2,8,6,10,8],
+    pir:[4,6,3,9,7,11,9]
+  },
+  '30d': {
+    labels:['W1','W2','W3','W4'],
+    rainfall:[18,22,14,28],
+    humidity:[72,78,68,85],
+    wetAlerts:[12,18,10,22],
+    pir:[14,20,12,24]
+  }
+};
+
+function initCorrChart(range) {
+  const d = CORR_DATA[range || '24h'];
+  const timeAdj = panelFilters.time === 'morning' ? -1 : panelFilters.time === 'afternoon' ? 2 : panelFilters.time === 'evening' ? 1 : panelFilters.time === 'night' ? -2 : 0;
+  const weekAdj = panelFilters.week === 'last' ? -1 : 0;
+  const dayMult = panelFilters.day === 'weekend' ? 0.85 : panelFilters.day === 'weekday' ? 1.08 : 1;
+  const rain = d.rainfall.map(v => Math.max(0, Math.round((v + timeAdj + weekAdj) * dayMult)));
+  const hum = d.humidity.map(v => Math.max(0, Math.min(100, Math.round((v + (timeAdj * 2) + weekAdj) * dayMult))));
+  const wet = d.wetAlerts.map(v => Math.max(0, Math.round((v + timeAdj + weekAdj) * dayMult)));
+  const pir = d.pir.map(v => Math.max(0, Math.round((v + timeAdj + weekAdj) * dayMult)));
+  const ctx = document.getElementById('corrChart');
+  if (!ctx) return;
+  if (corrCI) corrCI.destroy();
+
+  corrCI = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: d.labels,
+      datasets: [
+        {label:'Rainfall (mm)', data:rain, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.07)', fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#3b82f6', borderWidth:2.5, yAxisID:'y1'},
+        {label:'Humidity (%)', data:hum, borderColor:'#7c3aed', backgroundColor:'rgba(124,58,237,.04)', fill:false, tension:.4, pointRadius:3, pointBackgroundColor:'#7c3aed', borderWidth:2, borderDash:[5,3], yAxisID:'y2'},
+        {label:'Wet Alerts', data:wet, borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.09)', fill:true, tension:.4, pointRadius:4, pointBackgroundColor:'#ef4444', borderWidth:2.5, yAxisID:'y'},
+        {label:'PIR Activity', data:pir, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.05)', fill:false, tension:.4, pointRadius:3, pointBackgroundColor:'#f59e0b', borderWidth:2, borderDash:[3,2], yAxisID:'y'}
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:'#fff', titleColor:'#1a2035', bodyColor:'#5a6480', borderColor:'#e8ecf4', borderWidth:1, padding:10, cornerRadius:8, mode:'index', intersect:false}
+      },
+      scales:{
+        x:{grid:{color:'rgba(232,236,244,.8)'}, ticks:{color:'#9aa3bc', font:{size:11, family:'Plus Jakarta Sans'}}},
+        y:{position:'left', grid:{color:'rgba(232,236,244,.8)'}, ticks:{color:'#9aa3bc', font:{size:11}}, beginAtZero:true, title:{display:true, text:'Alerts / Activity', color:'#9aa3bc', font:{size:11}}},
+        y1:{position:'right', grid:{display:false}, ticks:{color:'#3b82f6', font:{size:11}}, beginAtZero:true, title:{display:true, text:'Rainfall (mm)', color:'#3b82f6', font:{size:11}}},
+        y2:{position:'right', grid:{display:false}, ticks:{color:'#7c3aed', font:{size:11}}, beginAtZero:false, display:false}
+      },
+      animation:{duration:700, easing:'easeInOutQuart'}
+      ,onClick: (_, elements) => {
+        if (!elements.length) return;
+        const idx = elements[0].index;
+        showPanelDrill(`Correlation at ${d.labels[idx]}`, [
+          {k:'Rainfall', v:`${rain[idx]} mm`},
+          {k:'Humidity', v:`${hum[idx]}%`},
+          {k:'Wet Alerts', v:String(wet[idx])},
+          {k:'PIR Activity', v:String(pir[idx])}
+        ], 'correlation chart');
+      }
+    }
+  });
+}
+
+function switchCorrTab(range, el) {
+  document.querySelectorAll('#corrTabBar .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  initCorrChart(range);
+}
+
+/* ── FILTER BY ZONE ── */
+function filterByZone(zone) {
+  panelFilters.zone = zone;
+  const bins = zone === 'all' ? BINS : BINS.filter(b => b.zone === zone);
+  const critical = bins.filter(b=>b.risk==='critical').length;
+  const high      = bins.filter(b=>b.risk==='high').length;
+  const moderate  = bins.filter(b=>b.risk==='moderate').length;
+  const low       = bins.filter(b=>b.risk==='low').length;
+  document.getElementById('pCritical').textContent = critical;
+  document.getElementById('pHigh').textContent = high;
+  document.getElementById('pModerate').textContent = moderate;
+  document.getElementById('pSafe').textContent = low + 35;
+  toast2('info', '🔍 Zone Filtered', zone==='all'?'Showing all zones':'Showing Zone '+zone+' only');
+}
+
+function showPanelDrill(title, metrics, source) {
+  document.getElementById('panelDrilldown').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <div>
+        <div style="font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--text)">${title}</div>
+        <div style="font-size:11px;color:var(--text3);font-weight:600">Source: ${source}</div>
+      </div>
+      <span class="badge-moderate" style="padding:4px 8px;border-radius:20px;font-size:11px;font-weight:700">Drill-down</span>
+    </div>
+    <div class="drill-mini">
+      ${metrics.map(m=>`<div class="drill-mini-box"><div style="font-size:11px;color:var(--text3);font-weight:700">${m.k}</div><div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;color:var(--text)">${m.v}</div></div>`).join('')}
+    </div>
+  `;
+}
+
+function applyPanelControls() {
+  panelFilters = {
+    zone: document.getElementById('zoneSel').value,
+    range: document.getElementById('timeSel').value,
+    risk: document.getElementById('riskSel').value,
+    day: document.getElementById('daySel').value,
+    week: document.getElementById('weekSel').value,
+    time: document.getElementById('timeBlockSel').value
+  };
+  filterByZone(panelFilters.zone);
+  updateCharts(panelFilters.range);
+  buildHeatmap();
+  initSectorChart(currentSectorMetric);
+  renderRankList();
+  const scoped = getPanelFilteredBins();
+  showPanelDrill('Current Filter Scope', [
+    {k:'Zone', v:panelFilters.zone === 'all' ? 'All Zones' : `Zone ${panelFilters.zone}`},
+    {k:'Range', v:panelFilters.range},
+    {k:'Risk', v:panelFilters.risk === 'all' ? 'All' : panelFilters.risk},
+    {k:'Day/Week/Time', v:`${panelFilters.day} · ${panelFilters.week} · ${panelFilters.time}`},
+    {k:'Matching Bins', v:String(scoped.length)}
+  ], 'panel controls');
+}
+
+function resetPanelControls() {
+  document.getElementById('zoneSel').value = 'all';
+  document.getElementById('timeSel').value = '24h';
+  document.getElementById('riskSel').value = 'all';
+  document.getElementById('daySel').value = 'all';
+  document.getElementById('weekSel').value = 'this';
+  document.getElementById('timeBlockSel').value = 'all';
+  panelFilters = {zone:'all', range:'24h', risk:'all', day:'all', week:'this', time:'all'};
+  filterByZone('all');
+  initSectorChart('count');
+  buildHeatmap();
+  initCorrChart('24h');
+  renderRankList();
+}
+
+function resetAllFiltersGlobal(){
+  const token=String(Date.now());
+  localStorage.setItem(GLOBAL_RESET_KEY,token);
+  localStorage.setItem(PAGE_RESET_KEY,token);
+  resetPanelControls();
+  document.getElementById('binSelectFactor').value='overall';
+  updateFactors('overall');
+  toast2('success','All filters reset','Defaults applied across dashboard pages.');
+}
+
+function applyPendingGlobalReset(){
+  const token=localStorage.getItem(GLOBAL_RESET_KEY);
+  if(!token)return;
+  const seen=localStorage.getItem(PAGE_RESET_KEY);
+  if(seen===token)return;
+  localStorage.setItem(PAGE_RESET_KEY,token);
+  resetPanelControls();
+  document.getElementById('binSelectFactor').value='overall';
+  updateFactors('overall');
+}
+
+/* ── REFRESH & EXPORT ── */
+function refreshData() {
+  document.getElementById('pCritical').textContent = Math.floor(2 + Math.random() * 2);
+  document.getElementById('pHigh').textContent = Math.floor(2 + Math.random() * 3);
+  document.getElementById('pHumidity').innerHTML = Math.floor(78 + Math.random() * 10) + '<span style="font-size:16px;font-weight:600">%</span>';
+  toast2('info', '↺ Data Refreshed', 'All sensor readings updated successfully.');
+}
+
+function exportReport() {
+  toast2('success', '📊 Report Exported', 'Mosquito risk report saved as PDF successfully.');
+}
+
+/* ── TOAST ── */
+function toast2(type, title, msg) {
+  const ic = {success:'✅', info:'ℹ️', warning:'⚠️', danger:'🚨'};
+  const bd = {success:'var(--green)', info:'var(--blue)', warning:'var(--amber)', danger:'var(--red)'};
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.borderLeft = '4px solid ' + (bd[type] || 'var(--blue)');
+  t.innerHTML = `<span class="tico">${ic[type]||'ℹ️'}</span><div><div class="tttl">${title}</div><div class="tmsg">${msg}</div></div>`;
+  document.getElementById('toaBox').appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),350); }, 4000);
+}
+
+/* ── CHART RANGE UPDATES ── */
+function updateCharts(range) {
+  initCorrChart(range);
+  buildHeatmap();
+}
+
+/* ── INIT ── */
+window.addEventListener('load', () => {
+  drawGauge(78);
+  updateFactors('overall');
+  renderRankList();
+  initSectorChart('count');
+  renderSectorMeters('count');
+  buildHeatmap();
+  initCorrChart('24h');
+  applyPendingGlobalReset();
+  showPanelDrill('Overall Risk Focus', [
+    {k:'Critical Bins', v:document.getElementById('pCritical').textContent},
+    {k:'High Bins', v:document.getElementById('pHigh').textContent},
+    {k:'Humidity', v:document.getElementById('pHumidity').textContent.replace('%','') + '%'},
+    {k:'Recommended Action', v:'Prioritize Zone C & B'}
+  ], 'default');
+
+  // Live simulation
+  setInterval(() => {
+    const hum = Math.floor(78 + Math.random() * 10);
+    document.getElementById('pHumidity').innerHTML = hum + '<span style="font-size:16px;font-weight:600">%</span>';
+  }, 7000);
+});
+</script>
+</body>
+</html>
