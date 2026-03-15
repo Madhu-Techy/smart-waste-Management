@@ -56,6 +56,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .tright{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .sel{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:7px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;outline:none;font-weight:500}
 .sel:hover{border-color:var(--green)}
+.sel.zone-color-sel{border-left-width:6px;padding-left:10px}
+.sel.zone-color-sel option{border-left:6px solid transparent;background:#fff}
+.sel.zone-color-sel option[value="A"]{border-left-color:var(--green)}
+.sel.zone-color-sel option[value="B"]{border-left-color:var(--amber)}
+.sel.zone-color-sel option[value="C"]{border-left-color:var(--red)}
+.sel.zone-color-sel option[value="D"]{border-left-color:var(--amber)}
+.sel.zone-color-sel option[value="E"]{border-left-color:var(--green)}
 .btn{padding:8px 16px;border-radius:10px;border:none;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
 .btn-g{background:var(--green);color:#fff}
 .btn-g:hover{background:#18a974;transform:translateY(-1px)}
@@ -199,6 +206,14 @@ tbody tr:hover td{background:var(--bg);color:var(--text)}
 .hmg{display:grid;gap:3px}
 .hmc{height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;transition:transform .1s}
 .hmc:hover{transform:scale(1.08);z-index:2;position:relative}
+.hmc-int{position:relative;border:1px solid rgba(255,255,255,.62);box-shadow:inset 0 0 0 1px rgba(26,32,53,.08)}
+.hmc-int::after{content:'↗';position:absolute;top:1px;right:2px;font-size:9px;color:rgba(26,32,53,.5);font-weight:700;line-height:1}
+.hmc-int:hover,.hmc-int:focus-visible{box-shadow:inset 0 0 0 1px rgba(26,32,53,.14),0 0 0 2px var(--blue-bd)}
+.hmc-int:focus-visible{outline:none}
+.hm-tip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:5px 9px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;display:none;pointer-events:none;z-index:20;box-shadow:0 6px 16px rgba(26,32,53,.22)}
+.hm-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--text)}
+.hmc-int:hover .hm-tip,.hmc-int:focus-visible .hm-tip{display:block}
+.hm-fixed-tip{margin-bottom:10px;padding:8px 10px;border-radius:10px;background:var(--blue-bg);border:1px solid var(--blue-bd);font-size:12px;color:#1d4ed8;font-weight:700}
 .hmlbl{background:transparent;color:var(--text3);font-size:11px;font-weight:600;justify-content:flex-end;padding-right:8px}
 .hmhdr{background:transparent;color:var(--text3);font-size:11px;font-weight:700}
 
@@ -237,6 +252,20 @@ tbody tr:hover td{background:var(--bg);color:var(--text)}
 .tico{font-size:20px;flex-shrink:0}
 .tttl{font-size:13px;font-weight:700;color:var(--text)}
 .tmsg{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* WALKTHROUGH */
+.tour-ov{position:fixed;inset:0;background:rgba(15,22,40,.5);z-index:2600;display:none}
+.tour-ov.open{display:block}
+.tour-pop{position:fixed;z-index:2700;width:320px;max-width:calc(100vw - 24px);background:var(--white);border:1px solid var(--border2);border-radius:14px;box-shadow:0 20px 40px rgba(18,28,60,.25);padding:14px}
+.tour-step{font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.tour-title{font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;color:var(--text);margin-top:3px}
+.tour-desc{font-size:12px;color:var(--text2);margin-top:5px;line-height:1.45}
+.tour-act{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+.tour-dot{display:flex;gap:5px}
+.tour-dot span{width:6px;height:6px;border-radius:50%;background:var(--border2)}
+.tour-dot span.on{background:var(--green)}
+.tour-target{position:relative;z-index:2650 !important;box-shadow:0 0 0 3px rgba(59,130,246,.95),0 0 0 7px rgba(255,255,255,.95),var(--shh);border-radius:12px;animation:tourPulse 1.2s ease-in-out infinite}
+@keyframes tourPulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
 
 /* CHIPS */
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
@@ -315,8 +344,9 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
       <a href="mosquito-risk-panel.html" style="text-decoration:none"><button class="btn btn-o">🦟 Mosquito Panel</button></a>
       <button class="btn btn-o" id="fltTglBtn" onclick="toggleFilterPane()">Hide Filters</button>
       <button class="btn btn-o" onclick="resetAllFiltersGlobal()">↺ Reset All Filters</button>
+      <button class="btn btn-o" id="startTourBtn" onclick="startWalkthrough(true)">🧭 Walkthrough</button>
       <button class="btn btn-o" onclick="toast2('info','Downloading...','Your report is being prepared.')">⬇ Download</button>
-      <button class="btn btn-g" onclick="openAssign()">+ Assign Pickup</button>
+      <button class="btn btn-g" id="assignPickupBtn" onclick="openAssign()">+ Assign Pickup</button>
     </div>
   </div>
 
@@ -341,9 +371,9 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
       </div>
 
       <div class="g32">
-        <div class="card">
+        <div class="card" id="tourAlertsCard">
           <div class="ch"><div><div class="ct">Bin Fullness Over the Day</div><div class="cd">Average fill level across all bins (every 2 hours)</div></div>
-            <select class="sel" style="font-size:12px;padding:5px 10px" onchange="updFill(this.value)"><option value="all">All Zones</option><option value="A">Zone A</option><option value="B">Zone B</option><option value="C">Zone C</option></select>
+            <select class="sel zone-color-sel" style="font-size:12px;padding:5px 10px" onchange="updFill(this.value)"><option value="all">◻ All Zones</option><option value="A">🟢 Zone A · Library</option><option value="B">🟠 Zone B · Cafeteria</option><option value="C">🔴 Zone C · Labs</option></select>
           </div>
           <div class="cb"><div class="cbox"><canvas id="fillChart"></canvas></div></div>
         </div>
@@ -402,7 +432,7 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
       <div class="card" style="margin-bottom:16px">
         <div class="ch"><div><div class="ct">📍 Live Bin Map — SLIIT Campus</div><div class="cd">Tap any bin marker to see its details</div></div><button class="btn btn-o" style="font-size:12px;padding:5px 11px" onclick="toast2('info','Map Refreshed','Bin locations updated.')">🔄 Refresh</button></div>
         <div class="cb" style="padding:0">
-          <div class="mwrap">
+          <div class="mwrap" id="tourLiveMap">
             <div class="mgrid"></div>
             <div class="ctag">SLIIT Malabe Campus</div>
             <div class="zlbl" style="top:58px;left:78px">Zone A</div>
@@ -480,7 +510,7 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
     <!-- REPORTS -->
     <section class="sec" id="section-analytics">
       <div class="bc"><span onclick="nav('overview',null)">Home</span><span class="bc-sep">›</span><span>Reports</span></div>
-      <div class="tabbar">
+      <div class="tabbar" id="tourAnalyticsTabs">
         <div class="atab on" onclick="switchTab('overview',this)">📈 Overview</div>
         <div class="atab" onclick="switchTab('sector',this)">📊 Sector Comparison</div>
         <div class="atab" onclick="switchTab('trends',this)">🕐 Weekly Trends</div>
@@ -497,7 +527,7 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
         </div>
       </div>
       <div id="tab-sector" style="display:none"><div class="card"><div class="ch"><div><div class="ct">📊 Zone Comparison</div><div class="cd">Overflow events, avg fill %, and wet incidents per zone</div></div></div><div class="cb"><div class="cbox" style="height:280px"><canvas id="sectorCompareChart"></canvas></div></div></div></div>
-      <div id="tab-trends" style="display:none"><div class="card"><div class="ch"><div><div class="ct">📅 Fill % Heatmap by Hour & Zone</div><div class="cd">Darker = higher average fill level</div></div></div><div class="cb"><div class="hmw" id="analyticsHeatmap"></div></div></div></div>
+      <div id="tab-trends" style="display:none"><div class="card"><div class="ch"><div><div class="ct">📅 Fill % Heatmap by Hour & Zone</div><div class="cd">Darker = higher average fill level · Hover cells marked ↗ for details</div></div></div><div class="cb"><div class="hm-fixed-tip">Sample detail (fixed): Zone B · 4pm · 88% avg fill · 4 overflow events</div><div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:10px">Hover any cell to see average fill and overflow count for that time slot.</div><div class="hmw" id="analyticsHeatmap"></div></div></div></div>
       <div id="tab-devices" style="display:none"><div class="sg"><div class="sc"><div class="sc-top"><div class="sc-lbl">All Sensors</div><div class="sc-ico" style="background:var(--blue-bg)">📡</div></div><div class="sc-num" style="color:var(--blue)">52</div><div class="sc-sub">Deployed on campus</div></div><div class="sc"><div class="sc-top"><div class="sc-lbl">Online</div><div class="sc-ico" style="background:var(--green-bg)">✅</div></div><div class="sc-num" style="color:var(--green)">48</div><div class="sc-sub">Reporting normally</div></div><div class="sc"><div class="sc-top"><div class="sc-lbl">Low Battery</div><div class="sc-ico" style="background:var(--amber-bg)">🔋</div></div><div class="sc-num" style="color:var(--amber)">6</div><div class="sc-sub">Need replacement soon</div></div><div class="sc"><div class="sc-top"><div class="sc-lbl">Offline</div><div class="sc-ico" style="background:var(--red-bg)">❌</div></div><div class="sc-num" style="color:var(--red)">4</div><div class="sc-sub">Not responding</div></div></div><div class="card"><div class="ch"><div><div class="ct">📡 All Sensors</div><div class="cd">Live health of deployed devices</div></div></div><div class="cb"><div class="dvs" id="analyticsDvStack"></div></div></div></div>
     </section>
 
@@ -541,13 +571,13 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
             <option value="maintenance">🔧 Maintenance</option>
             <option value="manager">📋 Manager</option>
           </select>
-          <select class="sel" id="ovZoneFilter">
-            <option value="all">All Zones</option>
-            <option value="A">Zone A</option>
-            <option value="B">Zone B</option>
-            <option value="C">Zone C</option>
-            <option value="D">Zone D</option>
-            <option value="E">Zone E</option>
+          <select class="sel zone-color-sel" id="ovZoneFilter">
+            <option value="all">◻ All Zones</option>
+            <option value="A">🟢 Zone A · Library</option>
+            <option value="B">🟠 Zone B · Cafeteria</option>
+            <option value="C">🔴 Zone C · Engineering Labs</option>
+            <option value="D">🟠 Zone D · Sports Complex</option>
+            <option value="E">🟢 Zone E · Main Gate</option>
           </select>
           <select class="sel" id="ovStatusFilter">
             <option value="all">All Status</option>
@@ -614,6 +644,18 @@ input[type=range]{flex:1;accent-color:var(--green);cursor:pointer}
 
 <div class="toa" id="toaBox"></div>
 
+<div class="tour-ov" id="tourOv" onclick="skipWalkthrough()"></div>
+<div class="tour-pop" id="tourPop" style="display:none">
+  <div class="tour-step" id="tourStepLbl">Step 1 of 5</div>
+  <div class="tour-title" id="tourTitle">Welcome</div>
+  <div class="tour-desc" id="tourDesc">This quick walkthrough highlights key actions in the dashboard.</div>
+  <div class="tour-act">
+    <button class="btn btn-o" style="padding:6px 10px;font-size:12px" onclick="skipWalkthrough()">Skip</button>
+    <div class="tour-dot" id="tourDots"></div>
+    <button class="btn btn-g" id="tourNextBtn" style="padding:6px 10px;font-size:12px" onclick="nextWalkthroughStep()">Next</button>
+  </div>
+</div>
+
 <script>
 const BINS=[
   {id:'A07',z:'A',f:97,s:'full',m:'Dry',pir:true,bat:3.8,sig:-65,t:'2 min ago'},
@@ -634,6 +676,17 @@ let overviewFilters={zone:'all',status:'all',moist:'all',day:'all',week:'this',t
 const GLOBAL_RESET_KEY='smartbin_global_filter_reset_token';
 const PAGE_RESET_KEY='smartbin_last_reset_dashboard';
 const FILTER_PANE_KEY='smartbin_filter_pane_hidden';
+const WALKTHROUGH_KEY='smartbin_walkthrough_seen_v1';
+
+let walkStep=0;
+let activeTourTarget=null;
+const WALK_STEPS=[
+  {section:'overview',target:'.sg',title:'KPI Cards',desc:'These cards summarize total bins, urgent bins, average fullness, and motion events at a glance.'},
+  {section:'overview',target:'#tourAlertsCard',title:'Alert Feed',desc:'Review high-priority alerts here first. Each row includes status context and a direct action button.'},
+  {section:'overview',target:'#assignPickupBtn',title:'Assign Pickup Flow',desc:'Use this button to open assignment and dispatch a truck quickly for urgent bins.'},
+  {section:'map',target:'#tourLiveMap',title:'Live Map',desc:'Use the live map to locate hotspots and click markers for exact bin details.'},
+  {section:'analytics',target:'#tourAnalyticsTabs',title:'Analytics Module',desc:'Open reports to compare sectors, trends, and device health for planning.'}
+];
 
 const TITLES={overview:'Dashboard Home',map:'Campus Map',bins:'All Bins',alerts:'Alerts',analytics:'Reports & Analytics',devices:'Sensors & Devices',settings:'Settings'};
 function nav(id,el){
@@ -648,6 +701,69 @@ function nav(id,el){
   if(id==='map')initMap();
   if(id==='alerts')initAlertHist();
 }
+
+function clearTourTarget(){
+  if(activeTourTarget){activeTourTarget.classList.remove('tour-target');activeTourTarget=null;}
+}
+
+function placeTourPopup(target){
+  const pop=document.getElementById('tourPop');
+  const r=target.getBoundingClientRect();
+  const m=12;
+  let top=r.bottom+m;
+  if(top+pop.offsetHeight>window.innerHeight-m)top=Math.max(m,r.top-pop.offsetHeight-m);
+  let left=r.left;
+  if(left+pop.offsetWidth>window.innerWidth-m)left=window.innerWidth-pop.offsetWidth-m;
+  left=Math.max(m,left);
+  pop.style.top=`${top}px`;
+  pop.style.left=`${left}px`;
+}
+
+function renderWalkthroughStep(){
+  const cfg=WALK_STEPS[walkStep];
+  if(!cfg)return;
+  nav(cfg.section,null);
+  const target=document.querySelector(cfg.target);
+  if(!target){skipWalkthrough();return;}
+  target.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'});
+  setTimeout(()=>{
+    clearTourTarget();
+    activeTourTarget=target;
+    target.classList.add('tour-target');
+    document.getElementById('tourStepLbl').textContent=`Step ${walkStep+1} of ${WALK_STEPS.length}`;
+    document.getElementById('tourTitle').textContent=cfg.title;
+    document.getElementById('tourDesc').textContent=cfg.desc;
+    const dots=document.getElementById('tourDots');
+    dots.innerHTML=WALK_STEPS.map((_,i)=>`<span class="${i===walkStep?'on':''}"></span>`).join('');
+    const next=document.getElementById('tourNextBtn');
+    next.textContent=walkStep===WALK_STEPS.length-1?'Finish':'Next';
+    placeTourPopup(target);
+  },220);
+}
+
+function startWalkthrough(force){
+  if(!force&&localStorage.getItem(WALKTHROUGH_KEY)==='1')return;
+  walkStep=0;
+  document.getElementById('tourOv').classList.add('open');
+  const pop=document.getElementById('tourPop');
+  pop.style.display='block';
+  renderWalkthroughStep();
+}
+
+function nextWalkthroughStep(){
+  if(walkStep>=WALK_STEPS.length-1){finishWalkthrough();return;}
+  walkStep+=1;
+  renderWalkthroughStep();
+}
+
+function finishWalkthrough(){
+  localStorage.setItem(WALKTHROUGH_KEY,'1');
+  clearTourTarget();
+  document.getElementById('tourOv').classList.remove('open');
+  document.getElementById('tourPop').style.display='none';
+}
+
+function skipWalkthrough(){finishWalkthrough();}
 
 function spk(id,vals,col){const el=document.getElementById(id);if(!el)return;const mx=Math.max(...vals);el.innerHTML=vals.map(v=>`<div class="spkb" style="height:${Math.max(3,(v/mx*100))}%;background:${col};opacity:.6"></div>`).join('');}
 
@@ -721,9 +837,27 @@ function resetOverviewFilters(){
   document.getElementById('ovWeekFilter').value='this';
   document.getElementById('ovTimeFilter').value='all';
   overviewFilters={zone:'all',status:'all',moist:'all',day:'all',week:'this',time:'all'};
+  refreshZoneSelectAccents();
   renderBins(BINS);
   updateOverviewKpis();
   if(fCI){fCI.data.datasets[0].data=[...FV];fCI.update();}
+}
+
+const ZONE_SELECT_ACCENTS={A:'var(--green)',B:'var(--amber)',C:'var(--red)',D:'var(--amber)',E:'var(--green)'};
+function applyZoneAccent(sel){
+  if(!sel)return;
+  const col=ZONE_SELECT_ACCENTS[sel.value]||'var(--border2)';
+  sel.style.borderLeftColor=col;
+}
+function refreshZoneSelectAccents(){
+  document.querySelectorAll('select.zone-color-sel').forEach(s=>applyZoneAccent(s));
+}
+function initZoneSelectAccents(){
+  const onChange=e=>applyZoneAccent(e.target);
+  document.querySelectorAll('select.zone-color-sel').forEach(s=>{
+    applyZoneAccent(s);
+    s.addEventListener('change',onChange);
+  });
 }
 
 function resetAllFiltersGlobal(){
@@ -880,9 +1014,10 @@ function buildAnalyticsHeatmap(){
   const zones=['Zone A','Zone B','Zone C','Zone D','Zone E'];
   const hrs=['6am','8am','10am','12pm','2pm','4pm','6pm','8pm','10pm'];
   const vals=[[30,35,45,60,65,72,75,68,40],[38,45,58,75,82,88,90,80,50],[22,28,35,45,50,58,60,50,30],[18,22,30,38,42,45,48,40,25],[28,35,48,62,70,75,78,70,42]];
+  const overflowCounts=[[0,0,0,1,1,2,2,1,0],[0,0,1,2,3,4,5,3,1],[0,0,0,0,1,1,1,1,0],[0,0,0,0,0,0,1,0,0],[0,0,0,1,1,2,2,1,0]];
   let h=`<div class="hmg" style="grid-template-columns:80px repeat(${hrs.length},1fr)"><div class="hmc hmhdr"></div>`;
   hrs.forEach(hr=>h+=`<div class="hmc hmhdr">${hr}</div>`);
-  zones.forEach((z,zi)=>{h+=`<div class="hmc hmlbl" style="justify-content:flex-start;padding-left:4px">${z}</div>`;hrs.forEach((_,hi)=>{const v=vals[zi][hi];const a=Math.max(.15,v/100);const bg=v>=80?`rgba(239,68,68,${a})`:v>=60?`rgba(245,158,11,${a})`:`rgba(34,200,138,${a})`;h+=`<div class="hmc" style="background:${bg}" title="${z} · ${hrs[hi]} · ${v}% avg fill"></div>`;});});
+  zones.forEach((z,zi)=>{h+=`<div class="hmc hmlbl" style="justify-content:flex-start;padding-left:4px">${z}</div>`;hrs.forEach((_,hi)=>{const v=vals[zi][hi];const oc=overflowCounts[zi][hi];const a=Math.max(.15,v/100);const bg=v>=80?`rgba(239,68,68,${a})`:v>=60?`rgba(245,158,11,${a})`:`rgba(34,200,138,${a})`;h+=`<div class="hmc hmc-int" tabindex="0" style="background:${bg}"><div class="hm-tip">${z} · ${hrs[hi]} · ${v}% avg fill · ${oc} overflow ${oc===1?'event':'events'}</div></div>`;});});
   h+='</div>';
   box.innerHTML=h;
 }
@@ -901,6 +1036,7 @@ function simLive(){BINS.forEach(b=>{b.f=Math.min(100,Math.max(0,Math.round(b.f+(
 
 window.addEventListener('load',()=>{
   renderZones();renderBins(BINS);initOverview();
+  initZoneSelectAccents();
   applyPendingGlobalReset();
   applySavedPaneState();
   updateOverviewKpis();
@@ -908,6 +1044,7 @@ window.addEventListener('load',()=>{
   spk('sp2',[3,4,3,5,6,7,7],'#ef4444');
   spk('sp3',[55,58,60,62,65,67,68],'#f59e0b');
   spk('sp4',[8,10,9,12,11,13,14],'#3b82f6');
+  setTimeout(()=>startWalkthrough(false),500);
   setInterval(simLive,5000);
   setInterval(()=>{if(fCI){fCI.data.datasets[0].data=fCI.data.datasets[0].data.map(v=>Math.min(100,Math.max(0,v+(Math.random()-.4))));fCI.update('none');}},3000);
 });
